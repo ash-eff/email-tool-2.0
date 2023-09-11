@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="selected_project" value="{{ selected_project }}">
+                {{ form|crispy }}
+                <button class="btn btn-outline-primary" type="submit">Generate Email</button>
+            </form>
+        </div>
+        <div class="col-sm-6 bg-light p-5 border" >
+            <div id="emailTextField">
+                {% if formatted_text %}
+                    {{ formatted_text|safe }}
+                {% endif %}
+            </div>
+            {% if formatted_text %}
+                <p><button class="btn btn-outline-primary" onclick="copyEmailText()">Copy Email</button></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+
+{% block script %}
+<script>
+    function copyEmailText() {
+        var textField = document.getElementById("emailTextField");
+        var tempTextArea = document.createElement("textarea");
+        tempTextArea.value = textField.innerText;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempTextArea);
+        alert("Email Text Copied");
+    }  
+</script>
+{% endblock script %}
+    
+    
