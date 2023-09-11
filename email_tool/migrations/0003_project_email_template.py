@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='project',
             name='email_template',
-            field=models.ForeignKey(default='Texas', on_delete=django.db.models.deletion.CASCADE, to='email_tool.emailtemplate'),
+            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, to='email_tool.emailtemplate'),
         ),
     ]

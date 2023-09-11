@@ -1,15 +1,15 @@
 from django import forms
 
-class NoTideAccountForm(forms.Form):
-    project_choices = [
-        ('maac2-hawaii', 'MAAC2 - Hawaii'), 
-        ('maac2-idaho', 'MAAC2 - Idaho'), 
-        ('maac2-washington', 'MAAC2 - Washington'), 
-        ('ohio', 'Ohio'),
-        ('texas', 'Texas'),
-        ]
+PROJECT_CHOICES = [
+    ('maac2-hawaii', 'MAAC2 - Hawaii'), 
+    ('maac2-idaho', 'MAAC2 - Idaho'), 
+    ('maac2-washington', 'MAAC2 - Washington'), 
+    ('ohio', 'Ohio'),
+    ('texas', 'Texas'),
+]
 
-    project = forms.ChoiceField(choices=project_choices, required=True)
+class NoTideAccountForm(forms.Form):
+    project = forms.ChoiceField(choices=PROJECT_CHOICES, required=True)
 
 class EmailTemplateForm(forms.Form):
     greeting_choices = [
@@ -32,7 +32,7 @@ class EmailTemplateForm(forms.Form):
     case_number = forms.IntegerField(required=True, label="Case Number")
     agent_name = forms.CharField(max_length=1200, required=True, label="Agent's Name (first name and last initial)")
 
-class TexasEmailTemplateForm(EmailTemplateForm):
+class TexasNoTideEmailTemplateForm(EmailTemplateForm):
     coordinator_choices = [
         ('District Testing Coordinator', 'District Testing Coordinator'),
         ('Campus Testing Coordinator', 'Campus Testing Coordinator'),
@@ -42,7 +42,7 @@ class TexasEmailTemplateForm(EmailTemplateForm):
     coordinator_name = forms.CharField(max_length=100, required=True, label="Coordinator's Name")
     coordinator_email = forms.EmailField(required=True, label="Coordinator's Email")
 
-class OhioEmailtemplateForm(EmailTemplateForm):
+class OhioNoTideEmailtemplateForm(EmailTemplateForm):
     coordinator_choices = [
         ('Building Testing Coordinator', 'Building Testing Coordinator'),
         ('District Administrator', 'District Administrator'),
@@ -57,7 +57,7 @@ class OhioEmailtemplateForm(EmailTemplateForm):
     coordinator_name_three = forms.CharField(max_length=100, required=False, label="Coordinator's Name 3")
     coordinator_email_three = forms.EmailField(required=False, label="Coordinator's Email 3")
 
-class MAAC2WashingtonTemplateForm(EmailTemplateForm):
+class MAAC2WashingtonNoTideTemplateForm(EmailTemplateForm):
     coordinator_choices = [
         ('School Coordinator', 'School Coordinator'),
         ('District Coordinator', 'District Coordinator'),
@@ -71,7 +71,7 @@ class MAAC2WashingtonTemplateForm(EmailTemplateForm):
     coordinator_name_three = forms.CharField(max_length=100, required=False, label="School Coordinator's Name 3")
     coordinator_email_three = forms.EmailField(required=False, label="Coordinator's Email 3")
 
-class MAAC2IdahoTemplateForm(EmailTemplateForm):
+class MAAC2IdahoNoTideTemplateForm(EmailTemplateForm):
     coordinator_choices = [
         ('School Coordinator', 'School Coordinator'),
         ('District Coordinator', 'District Coordinator'),
@@ -85,7 +85,7 @@ class MAAC2IdahoTemplateForm(EmailTemplateForm):
     coordinator_name_three = forms.CharField(max_length=100, required=False, label="School Coordinator's Name 3")
     coordinator_email_three = forms.EmailField(required=False, label="Coordinator's Email 3")
 
-class MAAC2HawaiiTemplateForm(EmailTemplateForm):
+class MAAC2HawaiiNoTideTemplateForm(EmailTemplateForm):
     coordinator_choices = [
         ('Principal', 'Principal'),
         ('Test Coordinator', 'Test Coordinator'),
@@ -98,3 +98,6 @@ class MAAC2HawaiiTemplateForm(EmailTemplateForm):
     coordinator_email_two = forms.EmailField(required=False, label="Coordinator's Email 2")
     coordinator_name_three = forms.CharField(max_length=100, required=False, label="School Coordinator's Name 3")
     coordinator_email_three = forms.EmailField(required=False, label="Coordinator's Email 3")
+
+class ClearCacheAndCookiesForm(EmailTemplateForm):
+    project = forms.ChoiceField(choices=PROJECT_CHOICES, required=True)
