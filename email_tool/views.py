@@ -6,7 +6,7 @@ from .forms import NoTideAccountForm, EmailTemplateForm, TexasEmailTemplateForm,
 from .models import EmailTemplate, Project
 
 def home_page(request):
-    return render(request, 'home.html')
+    return render(request, 'index.html')
 
 class NoTideAccountView(View):
     def get(self, request):
