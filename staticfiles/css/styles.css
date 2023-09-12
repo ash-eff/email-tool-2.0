@@ -1,0 +1,7 @@
+.custom-button {
+    width: 300px;
+    height: 100px;
+    display: flex;
+    justify-content: center; /* Center text horizontally */
+    align-items: center; /* Center text vertically */
+}

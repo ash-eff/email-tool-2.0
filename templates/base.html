@@ -6,36 +6,41 @@
     <title>{% block title %} Email Tool {% endblock title %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">   
-    
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
     {% block styles %}{% endblock styles %}
       
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
     {% block script %}{% endblock script %}
       
   </head>
 <body>
-    <main>
-      <div>
-        <header class="d-flex justify-content-center py-3">
-          <ul class="nav">
-            <li class="nav-item">
-              <a href="{% url 'index' %}" class="nav-link active" aria-current="page">Home</a></li>
-            <li class="nav-item">
-              <a href="{% url 'no-tide-account' %}" class="nav-link">No TIDE Account</a></li>
-            <li class="nav-item">
-              <a href="{% url 'clear-cache-and-cookies' %}" class="nav-link">Clear Cache And Cookies</a></li>
-            <li class="nav-item">
-              <a href="#" class="nav-link disabled" aria-disabled="true">Project Team Escalation</a></li>
-            <li class="nav-item">
-              <a href="#" class="nav-link disabled" aria-disabled="true">Tier 2 Escalation</a></li>
+  <main>
+    <header class="p-3 bg-dark text-white">
+      <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center"> 
+          <ul class="nav col-12 col-lg-auto me-auto mb-2 justify-content-start mb-md-0">
+            <li><a href="{% url 'home' %}" class="nav-link px-2 text-warning">Home</a></li>
+              
+              {% if selected_project %}
+                <li><a href="{% url 'project-landing-page' name=selected_project.name %}" class="nav-link px-2 text-white">{% block header %}{% endblock header %}</a></li>
+              {% endif %}
+              
           </ul>
-        </header>
-  
-          {% block content %}
-          {% endblock content %}
+          <ul class="nav col-12 col-lg-auto ms-auto mb-2 justify-content-end mb-md-0">
+            <li><a href="#" class="nav-link px-2 text-white">About</a></li>
+          </ul>
+        </div>
       </div>
-    </main>
+    </header>
+    {% block content %}
+      
+    {% endblock content %}
+      
+  </main>
+  
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>

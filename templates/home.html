@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block header %}
+    Unofficial Email Tool
+{% endblock header %}
+    
+{% block content %}  
+<div class="container col-sm-5 bg-dark p-5 border rounded" style="margin-top: 120px; border-radius: 2px;">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center">
+                <p class="nice-font" style="color: white;">Please select your project.</p>
+            </div>
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button class="btn btn-outline-primary go-button" type="submit">GO!</button>
+                </form>
+        </div>
+    </div>
+</div>         
+{% endblock content %}
+    

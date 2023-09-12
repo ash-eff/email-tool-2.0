@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import NoTideAccountView, NoTideEmailTemplateView, home_page, ClearCacheAndCookiesView
+from .views import ProjectSelectionView, ProjectLandingPageView, NoTideEmailTemplateView, ClearCacheAndCookiesView
 
 urlpatterns = [
-    path('', home_page, name='index'),
-    path('no-tide-account', NoTideAccountView.as_view(), name='no-tide-account'),
-    path('no-tide-email-form-template/<str:name>/', NoTideEmailTemplateView.as_view(), name='no-tide-email-form-template'),
-    path('clear-cache-and-cookies/', ClearCacheAndCookiesView.as_view(), name='clear-cache-and-cookies'),
+    path('', ProjectSelectionView.as_view(), name='home'),
+    path('project-landing-page/<str:name>/', ProjectLandingPageView.as_view(), name='project-landing-page'),
+    path('no-tide-email-template/<str:name>/', NoTideEmailTemplateView.as_view(), name='no-tide-email-template'),
+    path('clear-cache-and-cookies/<str:name>/', ClearCacheAndCookiesView.as_view(), name='clear-cache-and-cookies'),
 ]

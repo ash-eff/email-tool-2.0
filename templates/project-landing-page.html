@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block header %}
+    {{selected_project_name}}
+{% endblock header %}
+    
+{% block content %}
+<div class="container-fluid" style="margin-top: 120px;">
+    <div class="row align-items-center">
+        <div class="text-center">
+            <p class="nice-font">Please select a template.</p>
+        </div>
+    </div>
+    <div class="row align-items-center">
+        <div class="col-md-6 mx-auto">
+            <div class="button-grid">
+                {% for template in email_templates %}
+                    <a class="btn btn-primary btn-lg custom-button pop-in-button" href="{% url template.html_page name=selected_project.name %}" role="button">{{template.subject}}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

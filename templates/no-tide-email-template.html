@@ -1,28 +1,40 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% block header %}
+    {{ selected_project_name }}
+{% endblock header %}
 {% block content %}
-<div class="container">
+<div class="container" style="margin-top: 60px;">
     <div class="row">
         <div class="col-md-6 mx-auto">
             <form method="post" class="mt-4">
                 {% csrf_token %}
                 <input type="hidden" name="selected_project" value="{{ selected_project }}">
-                {{ form|crispy }}
-                <button class="btn btn-outline-primary" type="submit">Generate Email</button>
+                {% for field in form %}
+                    <div class="form-group email-form-control form-nice-font">
+                        {{ field|as_crispy_field }}
+                    </div>
+                {% endfor %}
+                
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-outline-primary generate-button" type="submit">Generate Email</button>
+                </div>
             </form>
         </div>
-        <div class="col-sm-6 bg-light p-5 border" >
+        <div class="col-sm-6 bg-light p-5 border">
             <div id="emailTextField">
                 {% if formatted_text %}
                     {{ formatted_text|safe }}
                 {% endif %}
             </div>
             {% if formatted_text %}
-                <p><button class="btn btn-outline-primary" onclick="copyEmailText()">Copy Email</button></p>
+                <p><button class="btn btn-outline-primary generate-button" onclick="copyEmailText()">Copy Email</button></p>
             {% endif %}
         </div>
     </div>
 </div>
+
+
 {% endblock content %}
 
 
@@ -40,5 +52,3 @@
     }  
 </script>
 {% endblock script %}
-    
-    

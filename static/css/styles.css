@@ -1,0 +1,103 @@
+.go-button {
+    width: 70px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #212529;
+    border-color: #ffb117;
+    color: #ffffff;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.go-button:hover {
+    background-color: #343a40;
+}
+
+.generate-button {
+    width: 150px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #212529;
+    border-color: #ffb117;
+    color: #ffffff;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.generate-button:hover {
+    background-color: #343a40;
+}
+
+
+.custom-button {
+    width: 300px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #212529;
+    border-color: #ffb117;
+    color: #ffffff;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.custom-button:hover {
+    background-color: #343a40;
+}
+
+.button-grid {
+    margin-top: 120px;
+}
+
+.pop-in-button {
+    animation: pop-in 0.5s ease-in-out;
+    opacity: 1;
+}
+
+@keyframes pop-in {
+    0% {
+        transform: scale(0.90);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.button-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.nice-font {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.5rem; 
+}
+
+.form-nice-font {
+    font-family: 'Roboto Mono', monospace;
+    font-size: .9rem; 
+}
+
+
+
+.form-control {
+    width: 100%;
+    max-width: 100%; 
+    margin: 0 auto; 
+}
+
+.email-form-control {
+    width: 60%;
+    max-width: 100%; 
+    margin: 0 auto; 
+}
+
