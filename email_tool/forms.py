@@ -1,6 +1,7 @@
 from django import forms
 
 PROJECT_CHOICES = [
+    ('indiana', 'Indiana'),
     ('maac2-hawaii', 'MAAC2 - Hawaii'), 
     ('maac2-idaho', 'MAAC2 - Idaho'), 
     ('maac2-washington', 'MAAC2 - Washington'), 
@@ -100,5 +101,14 @@ class MAAC2HawaiiNoTideTemplateForm(EmailTemplateForm):
     coordinator_name_three = forms.CharField(max_length=100, required=False, label="School Coordinator's Name 3")
     coordinator_email_three = forms.EmailField(required=False, label="Coordinator's Email 3")
 
+class IndianaNoTideTemplateForm(EmailTemplateForm):
+    user_email = forms.EmailField(required=True, label="User's Email")
+    coordinator_name = forms.CharField(max_length=100, required=True, label="Corporation Coordinator's Name")
+    coordinator_email = forms.EmailField(required=True, label="Corporation Coordinator's Email")
+    coordinator_phone = forms.CharField(max_length=15, required="True", label="Corporation Coordinator's Phone Number")
+
 class ClearCacheAndCookiesForm(EmailTemplateForm):
-    pass
+    pass 
+
+class ProjectTeamEscalationForm(EmailTemplateForm):
+    content = forms.Textarea()

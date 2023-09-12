@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from .forms import (ProjectSelectionForm, EmailTemplateForm, TexasNoTideEmailTemplateForm, 
                     OhioNoTideEmailtemplateForm, MAAC2WashingtonNoTideTemplateForm, MAAC2IdahoNoTideTemplateForm, 
-                    MAAC2HawaiiNoTideTemplateForm, ClearCacheAndCookiesForm)
+                    MAAC2HawaiiNoTideTemplateForm, ClearCacheAndCookiesForm, IndianaNoTideTemplateForm)
 from .models import Project
 
 class ProjectSelectionView(View):
@@ -40,6 +40,8 @@ class NoTideEmailTemplateView(View):
                 form_class = MAAC2IdahoNoTideTemplateForm
             case 'MAAC2-HAWAII':
                 form_class = MAAC2HawaiiNoTideTemplateForm
+            case 'INDIANA':
+                form_class = IndianaNoTideTemplateForm
             case _:
                 form_class = EmailTemplateForm
 
@@ -60,6 +62,8 @@ class NoTideEmailTemplateView(View):
                 form = MAAC2IdahoNoTideTemplateForm(request.POST)
             case 'MAAC2-HAWAII':
                 form = MAAC2HawaiiNoTideTemplateForm(request.POST)
+            case 'INDIANA':
+                form = IndianaNoTideTemplateForm(request.POST)
             case _:
                 form = EmailTemplateForm(request.POST)
 
@@ -75,6 +79,7 @@ class NoTideEmailTemplateView(View):
 
 class ClearCacheAndCookiesView(View):
     def get(self, request, name):
+        print("get: " + name)
         selected_project = get_object_or_404(Project, name=name)
         selected_project_name = name.upper()
         form = ClearCacheAndCookiesForm
@@ -93,3 +98,25 @@ class ClearCacheAndCookiesView(View):
             return render(request, 'clear-cache-and-cookies.html', {'form': form, 'formatted_text': formatted_text, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
         
         return render(request, 'clear-cache-and-cookies.html', {'form': form, })
+    
+class ResetPasswordView(View):
+    def get(self, request, name):
+        print("get: " + name)
+        selected_project = get_object_or_404(Project, name=name)
+        selected_project_name = name.upper()
+        form = EmailTemplateForm
+        return render(request, 'reset-password.html', {'form': form, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
+    
+    def post(self, request, name):
+        form = EmailTemplateForm(request.POST)
+        if form.is_valid():
+            selected_project = get_object_or_404(Project, name=name)
+            selected_project_name = name.upper()
+            project = get_object_or_404(Project, name=selected_project)
+            subject_line = name.title() + ' Reset Password'
+            clear_cache_email_template = project.email_templates.get(subject=subject_line)
+            template_text = clear_cache_email_template.template_text
+            formatted_text = template_text.format(**form.cleaned_data)
+            return render(request, 'reset-password.html', {'form': form, 'formatted_text': formatted_text, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
+        
+        return render(request, 'reset-password.html', {'form': form, })

@@ -12,14 +12,12 @@
             <p class="nice-font">Please select a template.</p>
         </div>
     </div>
-    <div class="row align-items-center">
-        <div class="col-md-6 mx-auto">
-            <div class="button-grid">
-                {% for template in email_templates %}
-                    <a class="btn btn-primary btn-lg custom-button pop-in-button" href="{% url template.html_page name=selected_project.name %}" role="button">{{template.subject}}</a>
-                {% endfor %}
-            </div>
-        </div>
+    <div class="row justify-content-center pt-5">
+        {% for template in email_templates %}
+            <div class="col-lg-2 mb-2">
+                <a class="btn btn-primary btn-lg custom-button pop-in-button" href="{% url template.html_page name=selected_project.name %}" role="button">{{template.subject}}</a>
+            </div>   
+        {% endfor %}
     </div>
 </div>
 {% endblock content %}
