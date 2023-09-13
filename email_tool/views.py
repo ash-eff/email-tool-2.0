@@ -5,7 +5,7 @@ from django.urls import reverse
 from .forms import (ProjectSelectionForm, EmailTemplateForm, TexasNoTideEmailTemplateForm, 
                     OhioNoTideEmailtemplateForm, MAAC2WashingtonNoTideTemplateForm, MAAC2IdahoNoTideTemplateForm, 
                     MAAC2HawaiiNoTideTemplateForm, ClearCacheAndCookiesForm, IndianaNoTideTemplateForm)
-from .models import Project
+from .models import Project, EmailTemplate
 
 class ProjectSelectionView(View):
     def get(self, request):
@@ -24,7 +24,15 @@ class ProjectLandingPageView(View):
         selected_project = get_object_or_404(Project, name=name)
         email_templates = selected_project.email_templates.all()
         return render(request, 'project-landing-page.html', {'selected_project': selected_project, 'email_templates': email_templates, 'selected_project_name': selected_project_name})
-          
+    
+    def post(self, request, name):
+        selected_project_name = name.upper()
+        selected_project = get_object_or_404(Project, name=name)
+        template_subject = request.POST.get('template_subject', None)
+        selected_template = selected_project.email_templates.get(subject=template_subject)
+        print(selected_template.template_text)
+        return render(request, 'email-template.html', {'selected_project': selected_project, 'selected_template': selected_template, 'selected_project_name': selected_project_name})
+    
 class NoTideEmailTemplateView(View):
     def get(self, request, name):
         selected_project = get_object_or_404(Project, name=name)

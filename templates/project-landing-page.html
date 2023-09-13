@@ -23,7 +23,11 @@
                 {% for template in email_templates %}
                     <div class="col-md-4">
                         <div class="d-flex justify-content-center">
-                            <a class="btn btn-primary btn-lg custom-button pop-in-button border-2 my-3" href="{% url template.html_page name=selected_project.name %}" role="button">{{ template.subject }}</a>
+                            <form method="post" action="{% url 'project-landing-page' selected_project %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="template_subject" value="{{ template.subject }}">
+                                <button class="btn btn-primary btn-lg custom-button pop-in-button border-2 my-3 button-nice-font" type="submit">{{ template.subject }}</button>
+                            </form>                            
                         </div>  
                     </div>
                 {% endfor %}

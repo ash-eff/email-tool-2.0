@@ -11,7 +11,9 @@
 }
 
 .go-button:hover {
-    background-color: #343a40;
+    background-color: #ffb117;
+    border-color: #ffffff;
+    color: #212529;
 }
 
 .generate-button {
@@ -27,7 +29,9 @@
 }
 
 .generate-button:hover {
-    background-color: #343a40;
+    background-color: #ffb117;
+    border-color: #ffffff;
+    color: #212529;
 }
 
 
@@ -83,6 +87,11 @@
     font-size: .8rem; 
 }
 
+.button-nice-font {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem; 
+}
+
 .form-control {
     width: 100%;
     max-width: 100%; 
@@ -102,10 +111,17 @@
   }
 
   .custom-background {
-    background-color: #D8D9DB;
+    background-color: white;
     border-radius: 10px;
     border-color: #ffb117;
     border-width: 2px;
+    border-style: solid;
+}
+
+.button-border {
+    border-radius: 10px;
+    border-color: #ffb117;
+    border-width: 1px;
     border-style: solid;
 }
 

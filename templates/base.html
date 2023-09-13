@@ -22,15 +22,15 @@
       <div class="container">
         <div class="d-flex flex-wrap align-items-center justify-content-center"> 
           <ul class="nav col-12 col-lg-auto me-auto mb-2 justify-content-start mb-md-0">
-            <li><a href="{% url 'home' %}" class="nav-link px-2 text-warning">Home</a></li>
+            <li><a href="{% url 'home' %}" class="nav-link px-2 text-warning button-nice-font button-border mx-2">Home</a></li>
               
               {% if selected_project %}
-                <li><a href="{% url 'project-landing-page' name=selected_project.name %}" class="nav-link px-2 text-white">{% block header %}{% endblock header %}</a></li>
+                <li><a href="{% url 'project-landing-page' name=selected_project.name %}" class="nav-link px-2 text-white button-nice-font button-border mx-2">{% block header %}{% endblock header %}</a></li>
               {% endif %}
               
           </ul>
           <ul class="nav col-12 col-lg-auto ms-auto mb-2 justify-content-end mb-md-0">
-            <li><a href="#" class="nav-link px-2 text-white">About</a></li>
+            <li><a href="#" class="nav-link px-2 text-white button-nice-font button-border mx-2">About</a></li>
           </ul>
         </div>
       </div>

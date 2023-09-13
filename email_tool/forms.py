@@ -1,4 +1,6 @@
 from django import forms
+from django.db import models
+from django.forms import ModelForm
 
 PROJECT_CHOICES = [
     ('indiana', 'Indiana'),
@@ -12,6 +14,24 @@ PROJECT_CHOICES = [
 class ProjectSelectionForm(forms.Form):
     project = forms.ChoiceField(choices=PROJECT_CHOICES, required=True, label='', 
                                 widget=forms.Select(attrs={'class': 'form-control'}),)
+    
+class Greeting(models.Model):
+    greeting_choices = [
+        ('Hello', 'Hello'),
+        ('Greetings', 'Greetings'),
+        ('Good Morning', 'Good Morning'),
+        ('Good Afternoon', 'Good Afternoon'),
+        ('Good Evening', 'Good Evening'),
+    ]
+    greeting = models.CharField(max_length=25, choices=greeting_choices)
+
+    def __str__(self):
+        return self.name
+
+class GreetingForm(ModelForm):
+    class Meta:
+        model = Greeting
+        fields = ['greeting',]
 
 class EmailTemplateForm(forms.Form):
     greeting_choices = [
