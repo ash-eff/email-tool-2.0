@@ -4,9 +4,9 @@ from django.forms import ModelForm
 
 PROJECT_CHOICES = [
     ('indiana', 'Indiana'),
-    ('maac2-hawaii', 'MAAC2 - Hawaii'), 
-    ('maac2-idaho', 'MAAC2 - Idaho'), 
-    ('maac2-washington', 'MAAC2 - Washington'), 
+    ('hawaii', 'Hawaii'), 
+    ('idaho', 'Idaho'), 
+    ('washington', 'Washington'), 
     ('ohio', 'Ohio'),
     ('texas', 'Texas'),
 ]
