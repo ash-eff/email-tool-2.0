@@ -38,7 +38,7 @@
 
 
 .custom-button {
-    width: 300px;
+    width: 250px;
     height: 100px;
     display: flex;
     justify-content: center;
@@ -119,7 +119,7 @@
     margin-bottom: auto;
   }
 
-  .custom-background {
+.custom-background {
     background-color: white;
     border-radius: 10px;
     border-color: #ffb117;
@@ -150,3 +150,18 @@ body {
     background-color: #D8D9DB;
 }
 
+
+@media (max-width: 1600px) {
+    .custom-button {
+        width: 187.5px;
+        height: 75px;
+    }
+}
+
+
+@media (max-width: 1600px) {
+    .button-nice-font {
+        font-size: .8rem; /* Adjust the font size as needed for medium screens */
+        /* Other styles */
+    }
+}

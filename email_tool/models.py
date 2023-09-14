@@ -64,7 +64,7 @@ class CustomFormField(models.Model):
     ]
 
     title = models.CharField(max_length=100, choices=TITLE_CHOICES)
-    label = models.CharField(max_length=40, choices=LABEL_CHOICES)
+    label = models.CharField(max_length=60, choices=LABEL_CHOICES)
     label_two = models.CharField(max_length=30, blank=True, null=True)
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
     required = models.BooleanField(default=True)

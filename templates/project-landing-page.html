@@ -17,23 +17,21 @@
         <div class="col-md-4"></div>
     </div>
     <div class="row pt-5">
-        <div class="col-md-3"></div>
-        <div class="col-md-6 mb-5">
+        <div class="col-lg-2 col-md-3 col-sm-4 col-12"></div>
+        <div class="col-lg-8 col-md-6 col-sm-4 col-12 mb-5">
             <div class="row">
-                
-                {% if email_templates %}
-                          
-                {% for template in email_templates %}
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-center">
-                            <form method="post" action="{% url 'project-landing-page' name=selected_project.name %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="template_name" value="{{ template.template_name }}">
-                                <button class="btn btn-warning btn-lg custom-button pop-in-button border-2 my-3 button-nice-font shadow-lg p-3 mb-5 rounded" type="submit">{{ template.template_name }}</button>
-                            </form>                            
-                        </div>  
-                    </div>
-                {% endfor %}
+                {% if email_templates %}     
+                    {% for template in email_templates %}
+                        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                            <div class="d-flex justify-content-center">
+                                <form method="post" action="{% url 'project-landing-page' name=selected_project.name %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="template_name" value="{{ template.template_name }}">
+                                    <button class="btn btn-warning btn-lg custom-button pop-in-button border-2 my-3 button-nice-font shadow-lg p-3 mb-5 rounded" type="submit">{{ template.template_name }}</button>
+                                </form>                            
+                            </div>  
+                        </div>
+                    {% endfor %}
                 {% else %}
                     <div class="text-center">
                         <p class="form-nice-font">No templates available.</p>
@@ -41,7 +39,7 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-md-3"></div>
+        <div class="col-lg-2 col-md-3 col-sm-4 col-12"></div>
     </div>
 </div>
 {% endblock content %}

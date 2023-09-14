@@ -6,6 +6,7 @@ from .forms import (ProjectSelectionForm,)
 from .models import Project, CustomFormTemplate
 from django import forms
 from django.core.exceptions import ValidationError
+import re
 
 class ProjectSelectionView(View):
     def get(self, request):
@@ -57,39 +58,39 @@ class CreateEmailView(View):
             field_required = field.required
 
             if field_type == 'CharField':
-                form_fields[field_name] = forms.CharField(
+                form_fields[con_field_name] = forms.CharField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'EmailField':
-                form_fields[field_name] = forms.EmailField(
+                form_fields[con_field_name] = forms.EmailField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.EmailInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'ChoiceField':
-                form_fields[field_name] = forms.ChoiceField(
+                form_fields[con_field_name] = forms.ChoiceField(
                     choices=[(choice.strip(), choice.strip()) for choice in field_choices],
                     required=field_required,
                     label = con_field_name,
                     widget=forms.Select(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'IntegerField':
-                form_fields[field_name] = forms.IntegerField(
+                form_fields[con_field_name] = forms.IntegerField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'EKField':
-                form_fields[field_name] = forms.IntegerField(
+                form_fields[con_field_name] = forms.IntegerField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                     validators=[self.validate_ekfield]
                 )
             elif field_type == 'TextField':
-                form_fields[field_name] = forms.CharField(
+                form_fields[con_field_name] = forms.CharField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.Textarea(attrs={'class': 'form-control'}),
@@ -114,45 +115,44 @@ class CreateEmailView(View):
         for field in sorted_fields:
             con_field_name = field.label + ' ' + field.label_two if field.label_two is not None else field.label
             field_name = field.label
-            field_name_two = field.label_two
             field_type = field.field_type
             field_choices = field.choices.split(',') if field.choices else []
             field_required = field.required
 
             if field_type == 'CharField':
-                form_fields[field_name] = forms.CharField(
+                form_fields[con_field_name] = forms.CharField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'EmailField':
-                form_fields[field_name] = forms.EmailField(
+                form_fields[con_field_name] = forms.EmailField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.EmailInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'ChoiceField':
-                form_fields[field_name] = forms.ChoiceField(
+                form_fields[con_field_name] = forms.ChoiceField(
                     choices=[(choice.strip(), choice.strip()) for choice in field_choices],
                     required=field_required,
                     label = con_field_name,
                     widget=forms.Select(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'IntegerField':
-                form_fields[field_name] = forms.IntegerField(
+                form_fields[con_field_name] = forms.IntegerField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'EKField':
-                form_fields[field_name] = forms.IntegerField(
+                form_fields[con_field_name] = forms.IntegerField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                     validators=[self.validate_ekfield]
                 )
             elif field_type == 'TextField':
-                form_fields[field_name] = forms.CharField(
+                form_fields[con_field_name] = forms.CharField(
                     required=field_required,
                     label = con_field_name,
                     widget=forms.Textarea(attrs={'class': 'form-control'}),
@@ -164,10 +164,12 @@ class CreateEmailView(View):
 
         if form.is_valid():
             template_text = template.template_text
-            result_id = form.cleaned_data.get('Results ID', '')
-            formatted_results = ', '.join([value.strip() for value in result_id.split(' ')])
-            formatted_text = template_text.format(**{'ResultsID': formatted_results, **form.cleaned_data})
+            form_data = form.cleaned_data.copy()
+            result_id = form.data.get('Results ID', '')
+            formatted_results = 'RID: ' + ', RID: '.join([value.strip() for value in re.split(r'[ ,]+', result_id)])
+            form_data['Results ID'] = formatted_results
 
+            formatted_text = template_text.format(**form_data)
 
             return render(request, 'email-template.html', {'form': form, 'formatted_text':  formatted_text, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
         else:
