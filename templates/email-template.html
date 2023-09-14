@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load crispy_forms_tags %}
 
 {% block header %}
@@ -28,7 +29,9 @@
                 {% if formatted_text %}
                     {{ formatted_text|safe }}
                 {% else %}
-                    <p class="text-center form-nice-font">email form</p>
+                    <div class="text-center">
+                        <img src="{% static 'mail_grey.png' %}" alt="email form" class="img-fluid" />
+                    </div>
                 {% endif %}
             </div>
             {% if formatted_text %}
