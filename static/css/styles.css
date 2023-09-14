@@ -13,6 +13,7 @@
 .go-button:hover {
     background-color: #ffb117;
     border-color: #ffffff;
+    color: white;
     color: #212529;
 }
 
@@ -31,6 +32,7 @@
 .generate-button:hover {
     background-color: #ffb117;
     border-color: #ffffff;
+    color: white;
     color: #212529;
 }
 
@@ -43,17 +45,24 @@
     align-items: center;
     background-color: #212529;
     border-color: #212529;
+    color: white;
     transition: background-color border-color 0.3s ease-in-out;
 }
 
 .custom-button:hover {
     background-color: #383f45;
     border-color: #ffb117;
+    color: white;
     transition: background-color border-color 0.3s ease-in-out;
 }
 
 .button-grid {
     margin-top: 120px;
+}
+
+.pop-in-button {
+    animation: pop-in 0.5s ease-in-out;
+    opacity: 1;
 }
 
 @keyframes pop-in {
@@ -123,6 +132,10 @@
     border-color: #ffb117;
     border-width: 1px;
     border-style: solid;
+}
+
+.button-border:hover {
+    background-color: #383f45 ;
 }
 
 .underline-text-gold {

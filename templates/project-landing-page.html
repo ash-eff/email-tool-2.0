@@ -23,10 +23,10 @@
                 {% for template in email_templates %}
                     <div class="col-md-4">
                         <div class="d-flex justify-content-center">
-                            <form method="post" action="{% url 'project-landing-page' selected_project %}">
+                            <form method="post" action="{% url 'project-landing-page' name=selected_project.name %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="template_subject" value="{{ template.subject }}">
-                                <a class="btn btn-primary btn-lg custom-button pop-in-button border-2 my-3 button-nice-font" href="{% url 'email-template' name=selected_project.name email_subject=template.subject %}" role="button">{{ template.subject }}</a>
+                                <button class="btn btn-warning btn-lg custom-button pop-in-button border-2 my-3 button-nice-font shadow-lg p-3 mb-5 rounded" type="submit">{{ template.subject }}</button>
                             </form>                            
                         </div>  
                     </div>
