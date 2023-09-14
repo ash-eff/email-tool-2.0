@@ -2,10 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
-from .forms import (ProjectSelectionForm, EmailTemplateForm, TexasNoTideEmailTemplateForm, 
-                    OhioNoTideEmailtemplateForm, MAAC2WashingtonNoTideTemplateForm, MAAC2IdahoNoTideTemplateForm, 
-                    MAAC2HawaiiNoTideTemplateForm, ClearCacheAndCookiesForm, IndianaNoTideTemplateForm)
-from .models import Project, EmailTemplate
+from .forms import (ProjectSelectionForm, EmailTemplateForm)
+from .models import Project, EmailTemplate, CustomFormTemplate
+from django import forms
 
 class ProjectSelectionView(View):
     def get(self, request):
@@ -16,7 +15,10 @@ class ProjectSelectionView(View):
         form = ProjectSelectionForm(request.POST)
         if form.is_valid():
             selected_project = form.cleaned_data['project']
-            return HttpResponseRedirect(reverse('project-landing-page', args=[selected_project]))  
+            return HttpResponseRedirect(reverse('project-landing-page', args=[selected_project]))
+        else:
+            # Handle the case where the form is not valid, e.g., re-render the form with errors
+            return render(request, 'home.html', {'form': form}) 
         
 class ProjectLandingPageView(View):
     def get(self, request, name):
@@ -33,98 +35,98 @@ class ProjectLandingPageView(View):
         print(selected_template.template_text)
         return render(request, 'email-template.html', {'selected_project': selected_project, 'selected_template': selected_template, 'selected_project_name': selected_project_name})
     
-class NoTideEmailTemplateView(View):
-    def get(self, request, name):
-        selected_project = get_object_or_404(Project, name=name)
-        selected_project_name = name.upper()
-        match selected_project_name:
-            case 'TEXAS':
-                form_class = TexasNoTideEmailTemplateForm
-            case 'OHIO':
-                form_class = OhioNoTideEmailtemplateForm
-            case 'MAAC2-WASHINGTON':
-                form_class = MAAC2WashingtonNoTideTemplateForm
-            case 'MAAC2-IDAHO':
-                form_class = MAAC2IdahoNoTideTemplateForm
-            case 'MAAC2-HAWAII':
-                form_class = MAAC2HawaiiNoTideTemplateForm
-            case 'INDIANA':
-                form_class = IndianaNoTideTemplateForm
-            case _:
-                form_class = EmailTemplateForm
-
-        form = form_class
-        return render(request, 'no-tide-email-template.html', {'form': form, 'name': name, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
+class CreateEmailView(View):
     
-    def post(self, request, name):
+    def get(self, request, name, email_subject):
         selected_project = get_object_or_404(Project, name=name)
-        selected_project_name = name.upper()
-        match selected_project_name:
-            case 'TEXAS':
-                form = TexasNoTideEmailTemplateForm(request.POST)
-            case 'OHIO':
-                form = OhioNoTideEmailtemplateForm(request.POST)
-            case 'MAAC2-WASHINGTON':
-                form = MAAC2WashingtonNoTideTemplateForm(request.POST)
-            case 'MAAC2-IDAHO':
-                form = MAAC2IdahoNoTideTemplateForm(request.POST)
-            case 'MAAC2-HAWAII':
-                form = MAAC2HawaiiNoTideTemplateForm(request.POST)
-            case 'INDIANA':
-                form = IndianaNoTideTemplateForm(request.POST)
-            case _:
-                form = EmailTemplateForm(request.POST)
+        template = get_object_or_404(EmailTemplate, subject=email_subject)
+        template_forms = template.custom_form_template
+
+        form_fields = {}
+        for field in template_forms.fields.all():
+            field_name = field.label
+            print(field_name)
+            field_type = field.field_type
+            field_choices = field.choices.split(',') if field.choices else []
+            field_required = field.required
+
+            if field_type == 'CharField':
+                form_fields[field_name] = forms.CharField(
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.TextInput(attrs={'class': 'form-control'}),
+                )
+            elif field_type == 'EmailField':
+                form_fields[field_name] = forms.EmailField(
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.EmailInput(attrs={'class': 'form-control'}),
+                )
+            elif field_type == 'ChoiceField':
+                form_fields[field_name] = forms.ChoiceField(
+                    choices=[(choice.strip(), choice.strip()) for choice in field_choices],
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.Select(attrs={'class': 'form-control'}),
+                )
+            elif field_type == 'IntegerField':
+                form_fields[field_name] = forms.IntegerField(
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.TextInput(attrs={'class': 'form-control'}),
+                )
+
+        CustomEmailForm = type('CustomEmailForm', (forms.Form,), form_fields)
+        form = CustomEmailForm
+        #print('form: ' + str(form_fields))  
+        return render(request, 'email-template.html', {'form': form})
+    
+    def post(self, request, name, email_subject):
+        selected_project = get_object_or_404(Project, name=name)
+        template = get_object_or_404(EmailTemplate, subject=email_subject)
+        template_forms = template.custom_form_template
+
+        form_fields = {}
+        for field in template_forms.fields.all():
+            field_name = field.label
+            field_type = field.field_type
+            field_choices = field.choices.split(',') if field.choices else []
+            field_required = field.required
+
+            if field_type == 'CharField':
+                form_fields[field_name] = forms.CharField(
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.TextInput(attrs={'class': 'form-control'}),
+                )
+            elif field_type == 'EmailField':
+                form_fields[field_name] = forms.EmailField(
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.EmailInput(attrs={'class': 'form-control'}),
+                )
+            elif field_type == 'ChoiceField':
+                form_fields[field_name] = forms.ChoiceField(
+                    choices=[(choice.strip(), choice.strip()) for choice in field_choices],
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.Select(attrs={'class': 'form-control'}),
+                )
+            elif field_type == 'IntegerField':
+                form_fields[field_name] = forms.IntegerField(
+                    required=field_required,
+                    label=field_name.title(),
+                    widget=forms.TextInput(attrs={'class': 'form-control'}),
+                )
+
+        CustomEmailForm = type('CustomEmailForm', (forms.Form,), form_fields)
+        form = CustomEmailForm(request.POST)
+             
 
         if form.is_valid():
-            selected_project = get_object_or_404(Project, name=name)
-            subject_line = name.title() + ' No Tide'
-            no_tide_template = selected_project.email_templates.get(subject=subject_line)
-            template_text = no_tide_template.template_text
+            template_text = template.template_text
             formatted_text = template_text.format(**form.cleaned_data)
-            return render(request, 'no-tide-email-template.html', {'form': form, 'formatted_text': formatted_text, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
-        
-        return render(request, 'no-tide-email-template.html', {'form': form, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
-
-class ClearCacheAndCookiesView(View):
-    def get(self, request, name):
-        print("get: " + name)
-        selected_project = get_object_or_404(Project, name=name)
-        selected_project_name = name.upper()
-        form = ClearCacheAndCookiesForm
-        return render(request, 'clear-cache-and-cookies.html', {'form': form, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
-    
-    def post(self, request, name):
-        form = ClearCacheAndCookiesForm(request.POST)
-        if form.is_valid():
-            selected_project = get_object_or_404(Project, name=name)
-            selected_project_name = name.upper()
-            project = get_object_or_404(Project, name=selected_project)
-            subject_line = name.title() + ' Clear Cache'
-            clear_cache_email_template = project.email_templates.get(subject=subject_line)
-            template_text = clear_cache_email_template.template_text
-            formatted_text = template_text.format(**form.cleaned_data)
-            return render(request, 'clear-cache-and-cookies.html', {'form': form, 'formatted_text': formatted_text, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
-        
-        return render(request, 'clear-cache-and-cookies.html', {'form': form, })
-    
-class ResetPasswordView(View):
-    def get(self, request, name):
-        print("get: " + name)
-        selected_project = get_object_or_404(Project, name=name)
-        selected_project_name = name.upper()
-        form = EmailTemplateForm
-        return render(request, 'reset-password.html', {'form': form, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
-    
-    def post(self, request, name):
-        form = EmailTemplateForm(request.POST)
-        if form.is_valid():
-            selected_project = get_object_or_404(Project, name=name)
-            selected_project_name = name.upper()
-            project = get_object_or_404(Project, name=selected_project)
-            subject_line = name.title() + ' Reset Password'
-            clear_cache_email_template = project.email_templates.get(subject=subject_line)
-            template_text = clear_cache_email_template.template_text
-            formatted_text = template_text.format(**form.cleaned_data)
-            return render(request, 'reset-password.html', {'form': form, 'formatted_text': formatted_text, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
-        
-        return render(request, 'reset-password.html', {'form': form, })
+            
+            return render(request, 'email-template.html', {'form': form, 'formatted_text':  formatted_text,})
+        else:
+            return render(request, 'email-template.html', {'form': form})

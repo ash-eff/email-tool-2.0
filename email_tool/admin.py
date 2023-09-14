@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.db import models
-from .models import Project, EmailTemplate
+from .models import Project, EmailTemplate, CustomFormField, CustomFormTemplate
 
 class EmailTemplateAdmin(admin.ModelAdmin):
     list_display = ('subject',)
@@ -11,4 +11,6 @@ class EmailTemplateAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Project)
+admin.site.register(CustomFormTemplate)
+admin.site.register(CustomFormField)
 admin.site.register(EmailTemplate, EmailTemplateAdmin)
