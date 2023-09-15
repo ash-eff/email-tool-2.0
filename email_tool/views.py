@@ -178,3 +178,11 @@ class CreateEmailView(View):
     def validate_ekfield(self, value):
         if value is not None and (value < 0 or value > 99999999):
             raise ValidationError('Must be a valid EK Number. Make sure you are not providing a Student Id!')
+        
+def super_secret_one_view(request):
+    return render(request, "super-secret-one.html")
+
+def super_secret_two_view(request):
+    text_list = ["Email Tool", "Mega-City One FAQs", "Mega-City One Year One Assessment Overview", "Mega-City One New Agent Resources", "TIDE", "TIDE Admin", "User's Guides", "Project Links", "Calendar Of Events"]
+    context = {'text_list': text_list}
+    return render(request, "super-secret-two.html", context)
