@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
-from .forms import (ProjectSelectionForm,)
+from .forms import (ProjectSelectionForm, TemplateBuilderForm)
 from .models import Project, CustomFormTemplate
 from django import forms
 from django.core.exceptions import ValidationError
 import re
+from django.utils.safestring import mark_safe
 
 class ProjectSelectionView(View):
     def get(self, request):
@@ -186,3 +187,101 @@ def super_secret_two_view(request):
     text_list = ["Email Tool", "Mega-City One FAQs", "Mega-City One Year One Assessment Overview", "Mega-City One New Agent Resources", "TIDE", "TIDE Admin", "User's Guides", "Project Links", "Calendar Of Events"]
     context = {'text_list': text_list}
     return render(request, "super-secret-two.html", context)
+
+class TemplateBuildView(View):
+    def get(self, request):
+        form = TemplateBuilderForm()
+        return render(request, "super-secret-three.html", {'form': form})
+    
+    def post(self, request):
+        form = TemplateBuilderForm(request.POST)
+        if form.is_valid():
+            selected_project = form.cleaned_data['project_selection']
+            greeting = '<p>{Greeting} {User_Name},</p>'
+            signature = self.get_signature(selected_project)
+            saved_template = form.cleaned_data['unformatted_template_form']
+            replaced_text = self.text_replace(saved_template)
+            formatted_email = "<p>" + "</p><p>".join(replaced_text.split('\n')) + "</p>"
+            completed_email = greeting + formatted_email + signature
+            formatted_email_safe  = mark_safe(completed_email)
+            form = TemplateBuilderForm(initial={'formatted_template_form': formatted_email, 'unformatted_template_form': saved_template})
+            return render(request, "super-secret-three.html", {'form': form, 'preview_text': formatted_email_safe})
+        else:
+            print("Invalid Form")
+            print(form.errors)
+            return render(request, "super-secret-three.html", {'form': form})
+        
+    def get_signature(self, selected_project):
+        signature = ''
+        if selected_project == 'texas':
+            signature = """
+                <p>{Closing},<br>
+                {Agent Name}<br>
+                Texas Testing Support<br>
+                Phone: 833-601-8821<br>
+                Email: TexasTestingSupport@cambiumassessment.com<br>
+                https://TexasAssessment.gov</p>
+            """
+        elif selected_project == 'ohio':
+            signature = """
+                <p>{Closing},<br>
+                {Agent Name}<br>
+                Ohio Help Desk<br>
+                Tel 1.877.231.7809<br>
+                Fax 1.877.218.7663<br>
+                ohhelpdesk@cambiumassessment.com<br>
+            """
+        elif selected_project == 'indiana':
+            signature = """
+                <p>{Closing},<br>
+                {Agent Name}<br>
+                Indiana Assessment Help Desk<br>
+                Cambium Assessment, Inc.<br>
+                Tel 1.866.298.4256<br>
+                Email indianahelpdesk@cambiumassessment.com</p>
+            """
+        elif selected_project == 'washington':
+            signature = """
+                <p>{Closing},<br>
+                {Agent Name}<br>
+                Washington Help Desk<br>
+                Cambium Assessment, Inc.<br>
+                Tel 1.844.560.7366<br>
+                wahelpdesk@cambiumassessment.com</p><br>
+            """
+        elif selected_project == 'hawaii':
+            signature = """
+                <p>{Closing},<br>
+                {Agent Name}<br>
+                HSAP Help Desk<br>
+                Cambium Assessment, Inc.<br>
+                Tel 1.866.648.3712<br>
+                Fax 1.877.218.7663<br>
+                hsaphelpdesk@cambiumassessment.com</p><br>
+            """
+        elif selected_project == 'idaho':
+            signature = """
+                <p>{Closing},<br>
+                {Agent Name}<br>
+                Idaho Help Desk<br>
+                Cambium Assessment, Inc.<br>
+                Tel 1.844.560.7365<br>
+                Fax 1.877.218.7663<br>
+                idhelpdesk@cambiumassessment.com</p><br>
+            """
+        return signature
+        
+    def text_replace(self, template):
+        replacements = {
+            "'COORDINATOR'": '{Coordinator Choices}',
+            "'COORDINATOR NAME'": '{Coordinator Name}',
+            "'COORDINATOR EMAIL'": '{Coordinator Email}',
+            "'COORDINATOR PHONE'": '{Coordinator Phone}',
+            "'CASE NUMBER'": '{Case Number}'
+        }
+
+        for old_word, new_word in replacements.items():
+            #print(f"Replacing {old_word} with {new_word}")
+            template = template.replace(old_word, new_word)
+
+        return template

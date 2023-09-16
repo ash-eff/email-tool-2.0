@@ -203,6 +203,11 @@ body {
     padding-right: 100px;
 }
 
+.scrollable-div {
+    max-height: 600px; /* Set the maximum height you desire */
+    overflow: auto; /* Add scrollbars when content overflows */
+}
+
 
 @media (max-width: 1600px) {
     .custom-button {

@@ -57,3 +57,8 @@ class SuperSecretForm(forms.Form):
     case_number = forms.IntegerField(required=True, label="Case Number")
     agent_name = forms.CharField(max_length=1200, required=True, label="Agent's Name (first name and last initial)")
 
+class TemplateBuilderForm(forms.Form):
+    project_selection = forms.ChoiceField(choices=PROJECT_CHOICES, required=True, label='', 
+                                widget=forms.Select(attrs={'class': 'form-control'}),)
+    unformatted_template_form = forms.CharField(widget=forms.Textarea)
+    formatted_template_form = forms.CharField(required=False, widget=forms.Textarea)
