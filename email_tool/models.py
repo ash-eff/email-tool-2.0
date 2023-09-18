@@ -13,17 +13,10 @@ class Project(models.Model):
     name = models.CharField(max_length=30)
     project = models.CharField(max_length=100, choices=PROJECTS)
     email_templates = models.ManyToManyField("CustomFormTemplate", blank=True)
+    signature = models.ForeignKey('CustomFormSignature', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
-
-class EmailTemplate(models.Model):
-    subject = models.CharField(max_length=100)
-    custom_form_template = models.ForeignKey("CustomFormTemplate", on_delete=models.CASCADE)
-    template_text = models.TextField()
-
-    def __str__(self):
-        return self.subject
     
 class CustomFormField(models.Model):
     LABEL_CHOICES = [
@@ -74,8 +67,17 @@ class CustomFormField(models.Model):
         label_two_display = ''
         if self.label_two != None:
             label_two_display = self.label_two
-        return f"{self.title} - {self.get_label_display()} {label_two_display}"
-    
+        return self.get_label_display()
+        #return f"{self.title} - {self.get_label_display()} {label_two_display}"
+
+class CustomFormSignature(models.Model):
+    project_name = models.CharField(max_length=100, choices=PROJECTS)
+    signature_name = models.CharField(max_length=100, default='Signature')
+    signature_text = models.TextField()
+
+    def __str__(self):
+        return f"{self.project_name.title()} - {self.signature_name}"
+
 class CustomFormTemplate(models.Model):
     project_name = models.CharField(max_length=100, choices=PROJECTS)
     template_name = models.CharField(max_length=100)
@@ -85,3 +87,5 @@ class CustomFormTemplate(models.Model):
 
     def __str__(self):
         return f"{self.project_name.title()} - {self.template_name}"
+    
+

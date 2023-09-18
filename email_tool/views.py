@@ -3,11 +3,12 @@ from django.views import View
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from .forms import (ProjectSelectionForm, TemplateBuilderForm)
-from .models import Project, CustomFormTemplate
+from .models import Project, CustomFormTemplate, CustomFormField
 from django import forms
 from django.core.exceptions import ValidationError
 import re
 from django.utils.safestring import mark_safe
+from django.db.models import Q
 
 class ProjectSelectionView(View):
     def get(self, request):
@@ -45,7 +46,6 @@ class CreateEmailView(View):
         try:
             template = get_object_or_404(CustomFormTemplate, project_name=name.lower(), template_name=template_name)
         except CustomFormTemplate.DoesNotExist:
-            # Handle the case where the template does not exist
             template = None
 
         field_order_config = template.field_order_config
@@ -53,7 +53,6 @@ class CreateEmailView(View):
         sorted_fields = sorted(template.fields.all(), key=lambda field: field_order_config.get(f"{field.label} {field.label_two}" if field.label_two else field.label, 0))
         for field in sorted_fields:
             con_field_name = field.label + ' ' + field.label_two if field.label_two is not None else field.label
-            field_name = con_field_name
             field_type = field.field_type
             field_choices = field.choices.split(',') if field.choices else []
             field_required = field.required
@@ -106,16 +105,13 @@ class CreateEmailView(View):
         try:
             template = get_object_or_404(CustomFormTemplate, project_name=name.lower(), template_name=template_name)
         except CustomFormTemplate.DoesNotExist:
-            # Handle the case where the template does not exist
             template = None
-        template_forms = template.template_text
 
         field_order_config = template.field_order_config
         form_fields = {}
         sorted_fields = sorted(template.fields.all(), key=lambda field: field_order_config.get(f"{field.label} {field.label_two}" if field.label_two else field.label, 0))
         for field in sorted_fields:
             con_field_name = field.label + ' ' + field.label_two if field.label_two is not None else field.label
-            field_name = field.label
             field_type = field.field_type
             field_choices = field.choices.split(',') if field.choices else []
             field_required = field.required
@@ -164,12 +160,10 @@ class CreateEmailView(View):
              
 
         if form.is_valid():
-            template_text = template.template_text
+            greeting = '<p>{Greeting} {User Name},</p>'
+            template_text = greeting + template.template_text + selected_project.signature.signature_text
             form_data = form.cleaned_data.copy()
-            result_id = form.data.get('Results ID', '')
-            formatted_results = 'RID: ' + ', RID: '.join([value.strip() for value in re.split(r'[ ,]+', result_id)])
-            form_data['Results ID'] = formatted_results
-
+            form_data['Results ID'] = self.format_results_ids
             formatted_text = template_text.format(**form_data)
 
             return render(request, 'email-template.html', {'form': form, 'formatted_text':  formatted_text, 'selected_project': selected_project, 'selected_project_name': selected_project_name})
@@ -180,43 +174,88 @@ class CreateEmailView(View):
         if value is not None and (value < 0 or value > 99999999):
             raise ValidationError('Must be a valid EK Number. Make sure you are not providing a Student Id!')
         
-def super_secret_one_view(request):
-    return render(request, "super-secret-one.html")
-
-def super_secret_two_view(request):
-    text_list = ["Email Tool", "Mega-City One FAQs", "Mega-City One Year One Assessment Overview", "Mega-City One New Agent Resources", "TIDE", "TIDE Admin", "User's Guides", "Project Links", "Calendar Of Events"]
-    context = {'text_list': text_list}
-    return render(request, "super-secret-two.html", context)
+    def format_results_ids(self):
+        result_id = self.form.data.get('Results ID', '')
+        formatted_results = 'RID: ' + ', RID: '.join([value.strip() for value in re.split(r'[ ,]+', result_id)])
+        return formatted_results
 
 class TemplateBuildView(View):
-    def get(self, request):
-        form = TemplateBuilderForm()
-        return render(request, "super-secret-three.html", {'form': form})
+    def get(self, request, name):
+        selected_project = get_object_or_404(Project, name=name)
+        initial_fields = CustomFormField.objects.filter(Q(title='Texas') | Q(title='All Projects'))
+        form = TemplateBuilderForm(initial={'fields': initial_fields.values_list('id', flat=True)})
+        return render(request, "template-builder.html", {'form': form, 'selected_project': selected_project})
     
-    def post(self, request):
-        form = TemplateBuilderForm(request.POST)
-        if form.is_valid():
-            selected_project = form.cleaned_data['project_selection']
-            greeting = '<p>{Greeting} {User_Name},</p>'
-            signature = self.get_signature(selected_project)
-            saved_template = form.cleaned_data['unformatted_template_form']
-            replaced_text = self.text_replace(saved_template)
-            formatted_email = "<p>" + "</p><p>".join(replaced_text.split('\n')) + "</p>"
-            completed_email = greeting + formatted_email + signature
-            formatted_email_safe  = mark_safe(completed_email)
-            form = TemplateBuilderForm(initial={'formatted_template_form': formatted_email, 'unformatted_template_form': saved_template})
-            return render(request, "super-secret-three.html", {'form': form, 'preview_text': formatted_email_safe})
-        else:
-            print("Invalid Form")
-            print(form.errors)
-            return render(request, "super-secret-three.html", {'form': form})
+    def post(self, request, name):
+        form = TemplateBuilderForm(request.POST,)
         
+        if 'format' in request.POST:
+            if form.is_valid():
+                selected_project = get_object_or_404(Project, name=name)
+                template_name = form.cleaned_data['template_name']
+                saved_template = form.cleaned_data['template']
+                selected_fields = form.cleaned_data['fields'] 
+                replaced_text = self.text_replace(saved_template)
+                formatted_email = self.format_template(replaced_text) 
+                formatted_email_safe  = mark_safe(formatted_email)
+                form.cleaned_data['formatted_template'] = formatted_email
+                
+                form = TemplateBuilderForm(
+                    initial={
+                        'formatted_template': formatted_email,
+                        'template': saved_template,
+                        'template_name': template_name,
+                        'project_selection': selected_project,
+                        'fields': selected_fields.values_list('id', flat=True),
+                    }
+                ) 
+                
+                return render(request, "template-builder.html", {'form': form, 'selected_project': selected_project, 'preview_text': formatted_email_safe})
+            else:
+                return render(request, "template-builder.html", {'form': form})
+            
+        elif 'save' in request.POST:
+            if form.is_valid():
+                selected_project = get_object_or_404(Project, name=name)
+                template_name = form.cleaned_data['template_name']
+                formatted_template = request.POST.get('formatted_template', '')
+                selected_field_ids = form.cleaned_data['fields']
+
+                custom_template, created = CustomFormTemplate.objects.get_or_create(
+                    project_name = selected_project.project,
+                    template_name = template_name,
+                )
+                custom_template.template_text = formatted_template 
+                custom_template.fields.set(selected_field_ids)
+                custom_template.save()
+
+                return HttpResponseRedirect(reverse('project-landing-page', args=[selected_project.name]))
+        
+    def format_template(self, replaced_text):
+        lines = replaced_text.split('\n')
+
+        formatted_lines = []
+
+        for line in lines:
+            line = line.strip()
+            if line.strip().endswith('!P'):
+                line_no_p = line.strip("!P").strip()
+                formatted_lines.append(f'{line_no_p}<br>')
+            else:
+                formatted_lines.append(f'<p>{line}</p>')
+
+        formatted_email = '\n'.join(formatted_lines)
+        return formatted_email
+
+    
+
+    # these need to be their own model, or at least part of the project model
     def get_signature(self, selected_project):
         signature = ''
         if selected_project == 'texas':
             signature = """
                 <p>{Closing},<br>
-                {Agent Name}<br>
+                {Agent Name}</span><br>
                 Texas Testing Support<br>
                 Phone: 833-601-8821<br>
                 Email: TexasTestingSupport@cambiumassessment.com<br>
@@ -224,8 +263,8 @@ class TemplateBuildView(View):
             """
         elif selected_project == 'ohio':
             signature = """
-                <p>{Closing},<br>
-                {Agent Name}<br>
+                <p><span class="template-text-color">{Closing},<br>
+                {Agent Name}</span><br>
                 Ohio Help Desk<br>
                 Tel 1.877.231.7809<br>
                 Fax 1.877.218.7663<br>
@@ -233,8 +272,8 @@ class TemplateBuildView(View):
             """
         elif selected_project == 'indiana':
             signature = """
-                <p>{Closing},<br>
-                {Agent Name}<br>
+                <p><span class="template-text-color">{Closing},<br>
+                {Agent Name}</span><br>
                 Indiana Assessment Help Desk<br>
                 Cambium Assessment, Inc.<br>
                 Tel 1.866.298.4256<br>
@@ -242,8 +281,8 @@ class TemplateBuildView(View):
             """
         elif selected_project == 'washington':
             signature = """
-                <p>{Closing},<br>
-                {Agent Name}<br>
+                <p><span class="template-text-color">{Closing},<br>
+                {Agent Name}</span><br>
                 Washington Help Desk<br>
                 Cambium Assessment, Inc.<br>
                 Tel 1.844.560.7366<br>
@@ -251,8 +290,8 @@ class TemplateBuildView(View):
             """
         elif selected_project == 'hawaii':
             signature = """
-                <p>{Closing},<br>
-                {Agent Name}<br>
+                <p><span class="template-text-color">{Closing},<br>
+                {Agent Name}</span><br>
                 HSAP Help Desk<br>
                 Cambium Assessment, Inc.<br>
                 Tel 1.866.648.3712<br>
@@ -261,8 +300,8 @@ class TemplateBuildView(View):
             """
         elif selected_project == 'idaho':
             signature = """
-                <p>{Closing},<br>
-                {Agent Name}<br>
+                <p><span class="template-text-color">{Closing},<br>
+                {Agent Name}</span><br>
                 Idaho Help Desk<br>
                 Cambium Assessment, Inc.<br>
                 Tel 1.844.560.7365<br>
@@ -271,17 +310,23 @@ class TemplateBuildView(View):
             """
         return signature
         
+
+    #create a dict from models and map here to iterate 
     def text_replace(self, template):
         replacements = {
-            "'COORDINATOR'": '{Coordinator Choices}',
-            "'COORDINATOR NAME'": '{Coordinator Name}',
-            "'COORDINATOR EMAIL'": '{Coordinator Email}',
-            "'COORDINATOR PHONE'": '{Coordinator Phone}',
-            "'CASE NUMBER'": '{Case Number}'
+            "!greeting": '<span class="template-text-color">{Greeting}</span>',
+            "!user name": '<span class="template-text-color">{User Name}</span>',
+            "!coordinator choices": '<span class="template-text-color">{Coordinator Choices}</span>',
+            "!coordinator name": '<span class="template-text-color">{Coordinator Name}</span>',
+            "!coordinator email": '<span class="template-text-color">{Coordinator Email}</span>',
+            "!coordinator phone": '<span class="template-text-color">{Coordinator Phone}</span>',
+            "!case number": '<span class="template-text-color">{Case Number}</span>',
+            "!closing": '<span class="template-text-color">{Closing}</span>',
+            "!agent name": '<span class="template-text-color">{Agent Name}</span>',
+            "!signature": '<span class="template-text-color">{Signature}</span>',
         }
 
         for old_word, new_word in replacements.items():
-            #print(f"Replacing {old_word} with {new_word}")
-            template = template.replace(old_word, new_word)
+            template = re.sub(re.escape(old_word), new_word, template, flags=re.IGNORECASE)
 
         return template

@@ -56,25 +56,6 @@
     transition: background-color border-color 0.3s ease-in-out;
 }
 
-.mega-city-button {
-    width: 300px;
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #212529;
-    border-color: #0bc0e0;
-    color: white;
-    transition: background-color border-color 0.3s ease-in-out;
-}
-
-.mega-city-button:hover {
-    background-color: #0bc0e0;
-    border-color: #ffb117;
-    color: 212529;
-    transition: background-color border-color 0.3s ease-in-out;
-}
-
 .button-grid {
     margin-top: 120px;
 }
@@ -120,16 +101,6 @@
     font-size: 1rem; 
 }
 
-.mega-button-nice-font {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 1.5rem; 
-}
-
-.mega-button-nice-font-sm {
-    font-family: 'Roboto Mono', monospace;
-    font-size: .8rem; 
-}
-
 .form-control {
     width: 100%;
     max-width: 100%; 
@@ -152,21 +123,6 @@
     background-color: white;
     border-radius: 10px;
     border-color: #ffb117;
-    border-width: 2px;
-    border-style: solid;
-}
-
-.custom-mega-city-background {
-    background-color: #949494;
-    border-radius: 10px;
-    border-color: #212529;
-    border-width: 2px;
-    border-style: solid;
-}
-
-.custom-mega-city-background-one {
-    border-radius: 10px;
-    border-color: #212529;
     border-width: 2px;
     border-style: solid;
 }
@@ -204,8 +160,12 @@ body {
 }
 
 .scrollable-div {
-    max-height: 600px; /* Set the maximum height you desire */
-    overflow: auto; /* Add scrollbars when content overflows */
+    max-height: 600px;
+    overflow: auto;
+}
+
+.template-text-color {
+    color: tomato;
 }
 
 

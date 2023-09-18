@@ -1,6 +1,8 @@
 from django import forms
 from django.db import models
 from django.forms import ModelForm
+from .models import CustomFormField
+from django.db.models import Q
 
 PROJECT_CHOICES = [
     ('indiana', 'Indiana'),
@@ -58,7 +60,11 @@ class SuperSecretForm(forms.Form):
     agent_name = forms.CharField(max_length=1200, required=True, label="Agent's Name (first name and last initial)")
 
 class TemplateBuilderForm(forms.Form):
-    project_selection = forms.ChoiceField(choices=PROJECT_CHOICES, required=True, label='', 
-                                widget=forms.Select(attrs={'class': 'form-control'}),)
-    unformatted_template_form = forms.CharField(widget=forms.Textarea)
-    formatted_template_form = forms.CharField(required=False, widget=forms.Textarea)
+    template_name = forms.CharField(max_length=100)
+    template = forms.CharField(widget=forms.Textarea)
+    formatted_template = forms.CharField(required=False, widget=forms.Textarea)
+    fields = forms.ModelMultipleChoiceField(
+        queryset=CustomFormField.objects.filter(Q(title='Texas') | Q(title='All Projects')),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
