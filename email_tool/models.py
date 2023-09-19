@@ -35,6 +35,8 @@ class CustomFormField(models.Model):
         ('Correct EK', 'Correct EK'),
         ('School Year', 'School Year'),
         ('Results ID', 'Results ID'),
+        ('Signature', 'Signature'),
+        ('Internal Teams', 'Internal Teams'),
     ]
 
     FIELD_TYPES = [

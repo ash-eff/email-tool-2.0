@@ -29,6 +29,14 @@
               
           </ul>
           <ul class="nav col-12 col-lg-auto ms-auto mb-2 justify-content-end mb-md-0">
+            
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'admin-panel' %}" class="nav-link px-2 text-white button-nice-font button-border mx-2">Admin Panel</a></li>
+              <li><a href="{% url 'logout' %}" class="nav-link px-2 text-white button-nice-font button-border mx-2">Log Out</a></li>
+            {% else %}
+              <li><a href="{% url 'login' %}" class="nav-link px-2 text-white button-nice-font button-border mx-2">Admin Login</a></li>
+            {% endif %}
+              
             <li><a href="#" class="nav-link px-2 text-white button-nice-font button-border mx-2">About</a></li>
           </ul>
         </div>

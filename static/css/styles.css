@@ -1,3 +1,7 @@
+* {
+    box-sizing: border-box;
+  }
+
 .go-button {
     width: 70px;
     height: 40px;
@@ -38,22 +42,22 @@
 
 
 .custom-button {
-    width: 250px;
-    height: 100px;
+    width: 800px;
+    height: 50px;
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: #212529;
-    border-color: #212529;
-    color: white;
-    transition: background-color border-color 0.3s ease-in-out;
+    border-color: #ffb117;
+    color: #ffffff;
+    transition: background-color 0.3s ease-in-out;
 }
 
 .custom-button:hover {
-    background-color: #383f45;
-    border-color: #ffb117;
+    background-color: #ffb117;
+    border-color: #ffffff;
     color: white;
-    transition: background-color border-color 0.3s ease-in-out;
+    color: #212529;
 }
 
 .button-grid {
@@ -63,6 +67,26 @@
 .pop-in-button {
     animation: pop-in 0.5s ease-in-out;
     opacity: 1;
+}
+
+.admin-button {
+    width: 100px;
+    height: 50px;
+    display: flex;
+    margin: 10px;
+    justify-content: center;
+    align-items: center;
+    background-color: #212529;
+    border-color: #ffb117;
+    color: #ffffff;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.admin-button:hover {
+    background-color: #ffb117;
+    border-color: #ffffff;
+    color: white;
+    color: #212529;
 }
 
 @keyframes pop-in {
@@ -124,7 +148,12 @@
     border-radius: 10px;
     border-color: #ffb117;
     border-width: 2px;
-    border-style: solid;
+    border-style: solid; 
+}
+
+.template-column {
+    height: 100%;
+    padding: 10px;
 }
 
 .button-border {
@@ -169,17 +198,35 @@ body {
 }
 
 
-@media (max-width: 1600px) {
+@media (max-width: 1000px) {
     .custom-button {
-        width: 187.5px;
-        height: 75px;
+        width: 600px;
+        height: 50px;
     }
 }
 
+@media (max-width: 800px) {
+    .custom-button {
+        width: 400px;
+        height: 50px;
+    }
+}
 
 @media (max-width: 1600px) {
     .button-nice-font {
-        font-size: .8rem; /* Adjust the font size as needed for medium screens */
-        /* Other styles */
+        font-size: .8rem;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .admin-button {
+        margin: 5px;
+    }
+}
+
+@media (max-width: 600px) {
+    .template-layout {
+        float: none;
+        width: 100%;
     }
 }

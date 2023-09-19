@@ -7,45 +7,67 @@
 {% endblock header %}
 
 {% block content %}
-<div class="container-fluid my-5">
-    <div class="row">
-        <form method="post" action="{% url 'template-builder' name=selected_project.name %}" >
-            {% csrf_token %}
-            <div class="container-fluid my-5">
-                <div class="row">
-                    <div class="col-sm-2 custom-background form-label button-nice-font">
-                        <p>Agent Fields:</p>
-                            {{ form.fields|as_crispy_field }}
-                    </div>
-        
-                    <div class="col-sm-5 custom-background form-label nice-font">
-                        <p >Project Name: {{selected_project.name}}</p>
-                        {{ form.template_name|as_crispy_field }}
-                        {{ form.template|as_crispy_field }}
-                        <input type="hidden" name="formatted_template" value="{{ form.formatted_template.value }}">
-                        <div class="d-flex justify-content-end">
-                            <button class="btn btn-outline-warning generate-button" type="submit" name="format">Format</button>
-                        </div>
-                    </div>
-        
-                    <div class="col-sm-5 custom-background">
-                        <label for="preview_area" class="form-label nice-font">Template Preview</label>
-                        <div id="preview_area" class="scrollable-div form-nice-font" >{{ preview_text|safe }}</div>
-                        
-                        {% if preview_text %}
-                        <div class="d-flex justify-content-end">
-                            <button class="btn btn-outline-warning generate-button" type="submit" name="save">Save Template</button>
-                        </div>
-                        {% endif %}
-                            
-
-                    </div>
+<div class="container-fluid" style="border-radius: 5px;">
+    <form method="post" action="{% url 'template-builder' name=selected_project.name %}" >
+        {% csrf_token %}
+        <div class="row" style="margin-top: 20px;">
+        <div class="col-md-2">
+            <div class="custom-background template-column">
+                <p>Agent Fields:</p>
+                <div class="form-nice-font">
+                    {{ form.fields|as_crispy_field }}
                 </div>
             </div>
-        </form>        
-        
+        </div>
+
+        <div class="col-md-5">
+            <div class="custom-background template-column" >
+                <p >Project Name: {{selected_project.name}}</p>
+                {{ form.template_name|as_crispy_field }}
+                {{ form.template|as_crispy_field }}
+                <input type="hidden" name="formatted_template" value="{{ form.formatted_template.value }}">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-outline-warning generate-button" type="submit" name="format">Format</button>
+                </div>
+            </div>
+        </div>
+    
+        <div class="col-md-5">
+            <div class="custom-background template-column">
+                <label for="preview_area" class="form-label nice-font">Template Preview</label>
+                <div id="preview_area" class="scrollable-div form-nice-font" >{{ preview_text|safe }}</div>
+                
+                {% if preview_text %}
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-outline-warning generate-button " type="submit" name="save">Save Template</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
+    </form>   
+    <div class="row">
+        <div class="col-md-12" style="margin-top: 20px; margin-bottom: 20px">
+            <div class="custom-background form-nice-font" >
+                <p ><b>Instructions:</b> Select a field or multiple fields from the left column. When constructing your template, 
+                    be sure to add an exclaimation mark before the keyword that matches your selected field. For instance, if you selected the Greeting field,
+                    you would add !Greeting to your template. Be sure to fill in your template applying your selected keywords to the part of the template that 
+                    you want an agent to change.<p><b>Example:</b> Please contact your !Coordinator Choices !Coordinator Name at !Coordinator Email for assistance with creating 
+                    a TIDE account.</p>
+                    <p><b>Note:</b> When consturcting your template, terminating a line with the enter key will create a new paragraph. If you do not want to create a paragraph
+                        and would instead like a line break, for instance to create a list, then terminate each line by adding the !P keyword.
+                    </p>
+                    <p>This is a line terminate by pressing the enter key.</p>
+                    <p>This is another line terminate by pressing the enter key.</p>
+                    <p>These are items in a list.</p>
+                        item 1 (using !P)<br>
+                        item 2 (using !P)<br>
+                        item 3 (using !P)<br>
+            </div>
+        </div>
+    </div>      
 </div>
+
 
 
 {% endblock content %}
