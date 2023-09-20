@@ -1,21 +1,19 @@
 from django import forms
 from django.db import models
 from django.forms import ModelForm
-from .models import CustomFormField
+from .models import CustomFormField, Project
 from django.db.models import Q
 
-PROJECT_CHOICES = [
-    ('indiana', 'Indiana'),
-    ('hawaii', 'Hawaii'), 
-    ('idaho', 'Idaho'), 
-    ('washington', 'Washington'), 
-    ('ohio', 'Ohio'),
-    ('texas', 'Texas'),
-]
 
 class ProjectSelectionForm(forms.Form):
-    project = forms.ChoiceField(choices=PROJECT_CHOICES, required=True, label='', 
+    project = forms.ChoiceField(required=True, label='', 
                                 widget=forms.Select(attrs={'class': 'form-control'}),)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        projects = Project.objects.filter(global_project=False)
+        project_choices = [(project.id, project.name) for project in projects]
+        self.fields['project'].choices = [('', 'Select a Project')] + project_choices
 
 class EmailTemplateForm(forms.Form):
     greeting_choices = [
@@ -63,8 +61,8 @@ class TemplateBuilderForm(forms.Form):
     template_name = forms.CharField(max_length=100)
     template = forms.CharField(widget=forms.Textarea)
     formatted_template = forms.CharField(required=False, widget=forms.Textarea)
-    fields = forms.ModelMultipleChoiceField(
-        queryset=CustomFormField.objects.filter(Q(title='Texas') | Q(title='All Projects')),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
+    agent_fields = forms.ModelMultipleChoiceField(
+                queryset=CustomFormField.objects.all(),
+                widget=forms.CheckboxSelectMultiple,
+                required=False,
     )

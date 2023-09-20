@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.http import HttpResponseRedirect, HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
 from .forms import (ProjectSelectionForm, TemplateBuilderForm)
 from .models import Project, CustomFormTemplate, CustomFormField
@@ -14,13 +15,14 @@ class ProjectSelectionView(View):
     def get(self, request):
         form = ProjectSelectionForm()
         selected_project = None
-        return render(request, 'home.html', {'form': form, 'selected_project': selected_project})
+        return render(request, 'home.html', {'form': form, 'selected_project': selected_project,})
     
     def post(self, request):
         form = ProjectSelectionForm(request.POST)
         if form.is_valid():
-            selected_project = form.cleaned_data['project'].lower()
-            return HttpResponseRedirect(reverse('project-landing-page', args=[selected_project]))
+            selected_project = form.cleaned_data['project']
+            project = Project.objects.get(pk=selected_project)
+            return HttpResponseRedirect(reverse('project-landing-page', args=[project.name]))
         else:
             # Handle the case where the form is not valid, e.g., re-render the form with errors
             return render(request, 'home.html', {'form': form}) 
@@ -39,7 +41,7 @@ class ProjectLandingPageView(View):
         template_name = request.POST.get('template_name', None)
         return HttpResponseRedirect(reverse('email-template', args=[name, template_name]))
     
-class AdminPanelView(View):
+class AdminPanelView(LoginRequiredMixin, View):
     def get(self, request):
         form = ProjectSelectionForm()
         selected_project = None
@@ -48,18 +50,19 @@ class AdminPanelView(View):
     def post(self, request):
         form = ProjectSelectionForm(request.POST)
         if form.is_valid():
-            selected_project = form.cleaned_data['project'].title()
+            selected_project = form.cleaned_data['project']
+            project = Project.objects.get(pk=selected_project)
             link = request.POST.get('button_name')
-            return HttpResponseRedirect(reverse(link, args=[selected_project]))
+            return HttpResponseRedirect(reverse(link, args=[project.name]))
         else:
             return render(request, 'admin-panel.html', {'form': form}) 
 
 class CreateEmailView(View):
     def get(self, request, name, template_name):
-        selected_project_name = name.upper()
+        selected_project_name = name
         selected_project = get_object_or_404(Project, name=name)
         try:
-            template = get_object_or_404(CustomFormTemplate, project_name=name.lower(), template_name=template_name)
+            template = get_object_or_404(CustomFormTemplate, project=selected_project, template_name=template_name)
         except CustomFormTemplate.DoesNotExist:
             template = None
 
@@ -73,7 +76,7 @@ class CreateEmailView(View):
         selected_project_name = name.upper()
         selected_project = get_object_or_404(Project, name=name)
         try:
-            template = get_object_or_404(CustomFormTemplate, project_name=name.lower(), template_name=template_name)
+            template = get_object_or_404(CustomFormTemplate, project=selected_project, template_name=template_name)
         except CustomFormTemplate.DoesNotExist:
             template = None
 
@@ -160,22 +163,27 @@ class CreateEmailView(View):
         formatted_results = 'RID: ' + ', RID: '.join([value.strip() for value in re.split(r'[ ,]+', result_id)])
         return formatted_results
 
-class TemplateBuildView(View):
+class TemplateBuildView(LoginRequiredMixin, View):
     def get(self, request, name):
+        selected_project_name = name.title()
         selected_project = get_object_or_404(Project, name=name)
-        initial_fields = CustomFormField.objects.filter(Q(title='Texas') | Q(title='All Projects'))
-        form = TemplateBuilderForm(initial={'fields': initial_fields.values_list('id', flat=True)})
-        return render(request, "template-builder.html", {'form': form, 'selected_project': selected_project})
+        global_project = get_object_or_404(Project, global_project=True)
+        initial_fields = CustomFormField.objects.filter(Q(project=selected_project) | Q(project=global_project))
+        print(f'Initial Fields {initial_fields}') 
+
+        form = TemplateBuilderForm(initial={'agent_fields': initial_fields})
+        return render(request, "template-builder.html", {'form': form, 'selected_project_name': selected_project_name, 'selected_project': selected_project, 'global_project': global_project})
     
     def post(self, request, name):
         form = TemplateBuilderForm(request.POST,)
-        
+        print(f'Form Keys {form.fields.keys()}') 
+        print(f'POST: {request.POST}')
         if 'format' in request.POST:
             if form.is_valid():
                 selected_project = get_object_or_404(Project, name=name)
                 template_name = form.cleaned_data['template_name']
                 saved_template = form.cleaned_data['template']
-                selected_fields = form.cleaned_data['fields'] 
+                selected_fields_ids = form.cleaned_data['agent_fields']
                 replaced_text = self.text_replace(saved_template)
                 formatted_email = self.format_template(replaced_text) 
                 formatted_email_safe  = mark_safe(formatted_email)
@@ -187,7 +195,7 @@ class TemplateBuildView(View):
                         'template': saved_template,
                         'template_name': template_name,
                         'project_selection': selected_project,
-                        'fields': selected_fields.values_list('id', flat=True),
+                        'agent_fields': selected_fields_ids,
                     }
                 ) 
                 
@@ -200,11 +208,11 @@ class TemplateBuildView(View):
                 selected_project = get_object_or_404(Project, name=name)
                 template_name = form.cleaned_data['template_name']
                 formatted_template = request.POST.get('formatted_template', '')
-                selected_field_ids = form.cleaned_data['fields']
+                selected_field_ids = form.cleaned_data['agent_fields']
                 field_order_config = self.get_field_order_config(formatted_template)
 
                 custom_template, created = CustomFormTemplate.objects.get_or_create(
-                    project_name = selected_project.project,
+                    project = selected_project,
                     template_name = template_name,
                 )
                 custom_template.template_text = formatted_template 
