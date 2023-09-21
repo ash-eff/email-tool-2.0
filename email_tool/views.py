@@ -169,9 +169,8 @@ class TemplateBuildView(LoginRequiredMixin, View):
         selected_project = get_object_or_404(Project, name=name)
         global_project = get_object_or_404(Project, global_project=True)
         initial_fields = CustomFormField.objects.filter(Q(project=selected_project) | Q(project=global_project))
-        print(f'Initial Fields {initial_fields}') 
 
-        form = TemplateBuilderForm(initial={'agent_fields': initial_fields})
+        form = TemplateBuilderForm
         return render(request, "template-builder.html", {'form': form, 'selected_project_name': selected_project_name, 'selected_project': selected_project, 'global_project': global_project})
     
     def post(self, request, name):

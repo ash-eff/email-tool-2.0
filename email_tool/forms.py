@@ -65,4 +65,5 @@ class TemplateBuilderForm(forms.Form):
                 queryset=CustomFormField.objects.all(),
                 widget=forms.CheckboxSelectMultiple,
                 required=False,
+                initial=[],
     )

@@ -27,7 +27,9 @@ class CustomFormField(models.Model):
         ('School Year', 'School Year'),
         ('Results ID', 'Results ID'),
         ('Signature', 'Signature'),
-        ('Internal Teams', 'Internal Teams'),
+        ('General Choice Field', 'General Choice Field'),
+        ('General Integer Field', 'General Integer Field'),
+        ('General Text Field', 'General Text Field'),
     ]
 
     FIELD_TYPES = [
@@ -44,10 +46,17 @@ class CustomFormField(models.Model):
     label_two = models.CharField(max_length=30, blank=True, null=True)
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
     required = models.BooleanField(default=True)
-    choices = models.CharField(max_length=200, blank=True, null=True) 
+    choices = models.CharField(max_length=200, blank=True, null=True)
+    template_code = models.CharField(max_length=61, default='', blank=True)
+    template_format = models.CharField(max_length=62, default='', blank=True)
 
     def is_global_field(self):
         return self.projects is None or self.projects.filter(global_project=True).exists()
+    
+    def save(self, *args, **kwargs):
+        self.template_code = '!' + self.label.lower()
+        self.template_format = '{' + self.label.lower() + '}'
+        super(CustomFormField, self).save(*args, **kwargs)
 
     def __str__(self):
         label_two_display = ''
