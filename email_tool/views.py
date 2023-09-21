@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic.edit import UpdateView
 from django.views import View
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
-from .forms import (ProjectSelectionForm, TemplateBuilderForm)
-from .models import Project, CustomFormTemplate, CustomFormField
+from .forms import (ProjectSelectionForm, TemplateBuilderForm, TemplateEditForm)
+from .models import Project, CustomFormTemplate, CustomFormField, CustomFormSignature
 from django import forms
 from django.core.exceptions import ValidationError
 import re
@@ -56,6 +57,170 @@ class AdminPanelView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse(link, args=[project.name]))
         else:
             return render(request, 'admin-panel.html', {'form': form}) 
+        
+class ViewEditTemplateView(LoginRequiredMixin, View):
+    def get(self, request, name):
+        selected_project_name = name
+        selected_project = get_object_or_404(Project, name=name)
+        email_templates = selected_project.email_templates.all()
+        return render(request, 'view-edit-templates.html', {'selected_project_name': selected_project_name, 'selected_project': selected_project,'email_templates': email_templates})
+    
+    def post(self, request, name):
+        selected_project_name = name
+        template_name = request.POST.get('template_name', None)
+        template_slug = template_name.replace(' ', '-').lower()
+        return HttpResponseRedirect(reverse('edit-template', args=[name, template_slug]))
+    
+class EditTemplateView(LoginRequiredMixin, UpdateView):
+    def get(self, request, name, template_slug):
+        selected_project_name = name
+        selected_project = get_object_or_404(Project, name=name)
+        selected_template = get_object_or_404(CustomFormTemplate, template_slug=template_slug)
+        global_project = get_object_or_404(Project, global_project=True)
+        initial_fields = CustomFormField.objects.filter(Q(project=selected_project) | Q(project=global_project))
+        selected_agent_fields = {field.template_format: field.template_code.title() for field in initial_fields}
+        template_with_reverse_formatted_fields = self.reverse_text_replace(selected_agent_fields, selected_template.template_text)
+        html_formatted_email_safe  = mark_safe(selected_template.template_text)
+        template_with_no_html_tags = self.remove_tags(template_with_reverse_formatted_fields)
+        
+        form = TemplateEditForm(initial={
+            'template_name': selected_template.template_name,
+            'template': template_with_no_html_tags,
+            'formatted_template': html_formatted_email_safe,
+            'agent_fields': selected_template.fields.all(),
+        })
+
+        return render(request, "edit-template.html", {
+            'form': form, 
+            'selected_template': selected_template,
+            'selected_project_name': selected_project_name, 
+            'selected_project': selected_project, 
+            'global_project': global_project,
+            'preview_template': html_formatted_email_safe,
+            'template_slug': template_slug,
+            }
+        )
+    
+    def post(self, request, name, template_slug):
+        form = TemplateBuilderForm(request.POST,)
+        if 'format' in request.POST:
+            if form.is_valid():
+                selected_project_name = name
+                selected_project = get_object_or_404(Project, name=selected_project_name)
+                template_name = form.cleaned_data['template_name']
+                selected_template = form.cleaned_data['template']
+                selected_agent_fields = form.cleaned_data['agent_fields']
+                template_with_formatted_fields = self.text_replace(selected_agent_fields, selected_template)
+                html_formatted_email = self.format_template_for_html(template_with_formatted_fields) 
+                html_formatted_email_safe  = mark_safe(html_formatted_email)
+                
+                form = TemplateEditForm(initial={
+                    'template_name': template_name,
+                    'template': selected_template,
+                    'formatted_template': html_formatted_email,
+                    'agent_fields': selected_agent_fields,
+                })
+
+                return render(request, "edit-template.html", {
+                    'form': form, 
+                    'selected_template': selected_template,
+                    'selected_project_name': selected_project_name, 
+                    'selected_project': selected_project, 
+                    'preview_template': html_formatted_email_safe,
+                    'template_slug': template_slug,
+                    })
+            else:
+                return render(request, "edit-template.html", {'form': form})
+            
+        elif 'save' in request.POST:
+            if form.is_valid():
+                selected_project_name = name
+                selected_project = get_object_or_404(Project, name=name)
+                template_name = form.cleaned_data['template_name']
+                selected_template = form.cleaned_data['template']
+                selected_agent_fields = form.cleaned_data['agent_fields']
+                template_with_formatted_fields = self.text_replace(selected_agent_fields, selected_template)
+                html_formatted_email = self.format_template_for_html(template_with_formatted_fields) 
+                field_order_config = self.get_field_order_config(template_with_formatted_fields)
+
+                custom_template, created = CustomFormTemplate.objects.get_or_create(
+                    project = selected_project,
+                    template_name = template_name,
+                    template_slug = template_slug
+                )
+                custom_template.template_text = html_formatted_email 
+                custom_template.fields.set(selected_agent_fields)
+                custom_template.field_order_config = field_order_config
+                custom_template.save()
+                selected_project.email_templates.add(custom_template)
+
+                return HttpResponseRedirect(reverse('view-edit-templates', args=[selected_project.name]))
+            
+        elif 'delete' in request.POST:
+            selected_project = get_object_or_404(Project, name=name)
+            selected_template = get_object_or_404(CustomFormTemplate, project=selected_project, template_slug=template_slug)
+
+            selected_template.delete()
+
+            return HttpResponseRedirect(reverse('view-edit-templates', args=[selected_project.name]))
+            
+    def reverse_text_replace(self, selected_agent_fields, selected_template):
+        replacements = selected_agent_fields
+
+        signature = '{Signature}'
+        replacements[signature] = '!Signature'
+        
+        for old_word, new_word in replacements.items():
+            selected_template = re.sub(re.escape(old_word), new_word, selected_template, flags=re.IGNORECASE)
+
+        return selected_template
+    
+    def remove_tags(self, form_data):
+        remove_front_span = re.sub(r'<span[^>]*>', '', form_data)
+        remove_back_span = re.sub(r'</span>', '', remove_front_span)
+        remove_front_p = re.sub(r'<p[^>]*>','', remove_back_span)
+        remove_back_p = re.sub(r'</p>', '', remove_front_p)
+        remove_breaks = re.sub(r'<br>', ' !P', remove_back_p)
+        form_data = remove_breaks
+        return form_data
+    
+    def format_template_for_html(self, template_with_formatted_fields):
+        lines = template_with_formatted_fields.split('\n')
+
+        formatted_lines = []
+
+        for line in lines:
+            line = line.strip()
+            if line.strip().endswith('!P'):
+                line_no_p = line.strip("!P").strip()
+                formatted_lines.append(f'{line_no_p}<br>')
+            else:
+                formatted_lines.append(f'<p>{line}</p>')
+
+        html_formatted_email = '\n'.join(formatted_lines)
+        return html_formatted_email
+
+    def get_field_order_config(self, formatted_template):
+        reg_format = re.compile(r'\{([^}]+)\}')
+        match = reg_format.findall(formatted_template)
+        field_order_config = {}
+        for index, m in enumerate(match):
+            field_order_config[m] = index
+        
+        return field_order_config
+
+    def text_replace(self, selected_agent_fields, template):
+        replacements = {}
+        for field in selected_agent_fields:
+            replacements[field.template_code.title()] = f'<span class="template-text-color">{field.template_format.title()}</span>'
+
+        signature = "{Signature}"
+        replacements['!Signature'] = f'<span class="template-text-color">{signature}</span>'
+        
+        for old_word, new_word in replacements.items():
+            template = re.sub(re.escape(old_word), new_word, template, flags=re.IGNORECASE)
+
+        return template
 
 class CreateEmailView(View):
     def get(self, request, name, template_name):
@@ -175,30 +340,28 @@ class TemplateBuildView(LoginRequiredMixin, View):
     
     def post(self, request, name):
         form = TemplateBuilderForm(request.POST,)
-        print(f'Form Keys {form.fields.keys()}') 
-        print(f'POST: {request.POST}')
         if 'format' in request.POST:
             if form.is_valid():
                 selected_project = get_object_or_404(Project, name=name)
                 template_name = form.cleaned_data['template_name']
-                saved_template = form.cleaned_data['template']
-                selected_fields_ids = form.cleaned_data['agent_fields']
-                replaced_text = self.text_replace(saved_template)
-                formatted_email = self.format_template(replaced_text) 
-                formatted_email_safe  = mark_safe(formatted_email)
-                form.cleaned_data['formatted_template'] = formatted_email
+                saved_template_text = form.cleaned_data['template']
+                selected_agent_fields = form.cleaned_data['agent_fields']
+                template_with_formatted_fields = self.text_replace(selected_agent_fields, saved_template_text)
+                html_formatted_email = self.format_template_for_html(template_with_formatted_fields) 
+                html_formatted_email_safe  = mark_safe(html_formatted_email)
+                form.cleaned_data['formatted_template'] = html_formatted_email
                 
                 form = TemplateBuilderForm(
                     initial={
-                        'formatted_template': formatted_email,
-                        'template': saved_template,
+                        'formatted_template': html_formatted_email,
+                        'template': saved_template_text,
                         'template_name': template_name,
                         'project_selection': selected_project,
-                        'agent_fields': selected_fields_ids,
+                        'agent_fields': selected_agent_fields,
                     }
                 ) 
                 
-                return render(request, "template-builder.html", {'form': form, 'selected_project': selected_project, 'preview_text': formatted_email_safe})
+                return render(request, "template-builder.html", {'form': form, 'selected_project': selected_project, 'preview_text': html_formatted_email_safe})
             else:
                 return render(request, "template-builder.html", {'form': form})
             
@@ -220,10 +383,10 @@ class TemplateBuildView(LoginRequiredMixin, View):
                 custom_template.save()
                 selected_project.email_templates.add(custom_template)
 
-                return HttpResponseRedirect(reverse('project-landing-page', args=[selected_project.name]))
+                return HttpResponseRedirect(reverse('view-edit-templates', args=[selected_project.name]))
         
-    def format_template(self, replaced_text):
-        lines = replaced_text.split('\n')
+    def format_template_for_html(self, template_with_formatted_fields):
+        lines = template_with_formatted_fields.split('\n')
 
         formatted_lines = []
 
@@ -235,8 +398,8 @@ class TemplateBuildView(LoginRequiredMixin, View):
             else:
                 formatted_lines.append(f'<p>{line}</p>')
 
-        formatted_email = '\n'.join(formatted_lines)
-        return formatted_email
+        html_formatted_email = '\n'.join(formatted_lines)
+        return html_formatted_email
 
     def get_field_order_config(self, formatted_template):
         reg_format = re.compile(r'\{([^}]+)\}')
@@ -247,21 +410,14 @@ class TemplateBuildView(LoginRequiredMixin, View):
         
         return field_order_config
 
-    #create a dict from models and map here to iterate 
-    def text_replace(self, template):
-        replacements = {
-            "!greeting": '<span class="template-text-color">{Greeting}</span>',
-            "!user name": '<span class="template-text-color">{User Name}</span>',
-            "!coordinator choices": '<span class="template-text-color">{Coordinator Choices}</span>',
-            "!coordinator name": '<span class="template-text-color">{Coordinator Name}</span>',
-            "!coordinator email": '<span class="template-text-color">{Coordinator Email}</span>',
-            "!coordinator phone": '<span class="template-text-color">{Coordinator Phone}</span>',
-            "!case number": '<span class="template-text-color">{Case Number}</span>',
-            "!closing": '<span class="template-text-color">{Closing}</span>',
-            "!agent name": '<span class="template-text-color">{Agent Name}</span>',
-            "!signature": '<span class="template-text-color">{Signature}</span>',
-        }
+    def text_replace(self, selected_agent_fields, template):
+        replacements = {}
+        for field in selected_agent_fields:
+            replacements[field.template_code.title()] = f'<span class="template-text-color">{field.template_format.title()}</span>'
 
+        signature = "{Signature}"
+        replacements['!Signature'] = f'<span class="template-text-color">{signature}</span>'
+        
         for old_word, new_word in replacements.items():
             template = re.sub(re.escape(old_word), new_word, template, flags=re.IGNORECASE)
 

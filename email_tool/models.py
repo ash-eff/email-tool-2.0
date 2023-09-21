@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 
 class Project(models.Model):
     name = models.CharField(max_length=40, default='Project Name')
@@ -26,7 +27,6 @@ class CustomFormField(models.Model):
         ('Correct EK', 'Correct EK'),
         ('School Year', 'School Year'),
         ('Results ID', 'Results ID'),
-        ('Signature', 'Signature'),
         ('General Choice Field', 'General Choice Field'),
         ('General Integer Field', 'General Integer Field'),
         ('General Text Field', 'General Text Field'),
@@ -77,6 +77,7 @@ class CustomFormSignature(models.Model):
 class CustomFormTemplate(models.Model):
     project = models.ForeignKey(Project, related_name='templates', on_delete=models.CASCADE, blank = True, null=True)
     template_name = models.CharField(max_length=100)
+    template_slug = models.SlugField(unique=True, null=True, blank=True)
     fields = models.ManyToManyField(CustomFormField, blank=True)
     template_text = models.TextField()
     field_order_config = models.JSONField(blank=True, null=True)
@@ -84,4 +85,7 @@ class CustomFormTemplate(models.Model):
     def __str__(self):
         return f"{self.project.name.title()} - {self.template_name}"
     
-
+    def save(self, *args, **kwargs):
+        if not self.template_slug:
+            self.template_slug = slugify(self.template_name)
+        super().save(*args, **kwargs)

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block header %}
+    {{selected_project_name}}
+{% endblock header %}
+    
+{% block content %}
+<div class="container bg-dark p-5 border border-warning border-2 shadow-lg p-5 mb-5 rounded" style="margin-top: 120px; border-radius: 5px;">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center">
+                <p class="nice-font underline-text-white" style="color: white;">View/Edit {{selected_project_name}} available templates.</p>
+            </div>
+                {% if email_templates %}     
+                    {% for template in email_templates %}
+                        <div class="d-flex justify-content-center">    
+                            <form method="post" class="mt-4 form-nice-font">
+                                {% csrf_token %}
+                                <input type="hidden" name="template_name" value="{{ template.template_name }}">
+                                <button class="btn btn-warning btn-lg custom-button pop-in-button border-2 button-nice-font p-3 mb-2 rounded" type="submit" name="button_name" value={{template.template_name}}>{{template.template_name}}</button>
+                            </form>     
+                        </div>
+                    {% endfor %}   
+                {% endif %}        
+        </div>
+    </div>
+</div> 
+{% endblock content %}
+    

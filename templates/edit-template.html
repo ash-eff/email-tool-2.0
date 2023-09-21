@@ -8,14 +8,14 @@
 
 {% block content %}
 <div class="container-fluid" style="border-radius: 5px;">
-    <form method="post" action="{% url 'template-builder' name=selected_project.name %}" >
+    <form method="post" action="{% url 'edit-template' name=selected_project.name template_slug=template_slug %}" >
         {% csrf_token %}
         <div class="row" style="margin-top: 20px;">
         <div class="col-md-2">
             <div class="custom-background template-column">
                 <p>Agent Fields:</p>
+                {{ form.agent_fields|as_crispy_field }}
                 <div class="form-nice-font">
-                    {{ form.agent_fields|as_crispy_field }}
                 </div>
             </div>
         </div>
@@ -25,7 +25,7 @@
                 <p >Project Name: {{selected_project.name}}</p>
                 {{ form.template_name|as_crispy_field }}
                 {{ form.template|as_crispy_field }}
-                <input type="hidden" name="formatted_template" value="{{ form.formatted_template.value }}">
+                <input type="hidden" name="formatted_template" value="{{ formatted_template }}">
                 <div class="d-flex justify-content-end">
                     <button class="btn btn-outline-warning generate-button" type="submit" name="format">Format</button>
                 </div>
@@ -35,13 +35,11 @@
         <div class="col-md-5">
             <div class="custom-background template-column">
                 <label for="preview_area" class="form-label nice-font">Template Preview</label>
-                <div id="preview_area" class="scrollable-div form-nice-font" >{{ preview_text|safe }}</div>
-                
-                {% if preview_text %}
+                <div id="preview_area" class="scrollable-div form-nice-font" >{{ preview_template|safe }}</div>
                 <div class="d-flex justify-content-end">
                     <button class="btn btn-outline-warning generate-button " type="submit" name="save">Save Template</button>
+                    <button class="btn btn-outline-warning generate-button" type="submit" name="delete">Delete Template</button>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
