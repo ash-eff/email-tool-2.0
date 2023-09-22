@@ -4,13 +4,15 @@ from django.views import View
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
-from .forms import (ProjectSelectionForm, TemplateBuilderForm, TemplateEditForm)
+from .forms import (ProjectSelectionForm, TemplateBuilderForm, 
+                    TemplateEditForm, AddProjectForm, EditSignatureForm)
 from .models import Project, CustomFormTemplate, CustomFormField, CustomFormSignature
 from django import forms
 from django.core.exceptions import ValidationError
 import re
 from django.utils.safestring import mark_safe
 from django.db.models import Q
+from django.contrib import messages
 
 class ProjectSelectionView(View):
     def get(self, request):
@@ -71,7 +73,7 @@ class ViewEditTemplateView(LoginRequiredMixin, View):
         template_slug = template_name.replace(' ', '-').lower()
         return HttpResponseRedirect(reverse('edit-template', args=[name, template_slug]))
     
-class EditTemplateView(LoginRequiredMixin, UpdateView):
+class EditTemplateView(LoginRequiredMixin, View):
     def get(self, request, name, template_slug):
         selected_project_name = name
         selected_project = get_object_or_404(Project, name=name)
@@ -255,7 +257,7 @@ class CreateEmailView(View):
             template_text = self.remove_span_tags(template_text)
             form_data = form.cleaned_data.copy()
             form_data['Results ID'] = self.format_results_ids
-            form_data['Signature'] = selected_project.signature.signature_text
+            form_data['Signature'] = selected_project.signature
 
             formatted_text = template_text.format(**form_data)
 
@@ -422,3 +424,53 @@ class TemplateBuildView(LoginRequiredMixin, View):
             template = re.sub(re.escape(old_word), new_word, template, flags=re.IGNORECASE)
 
         return template
+    
+class ProjectAddView(LoginRequiredMixin, View):
+    def get(self, request):
+        form = AddProjectForm()
+        return render(request, 'add-project.html', {'form': form})
+    
+    def post(self, request):
+        form = AddProjectForm(request.POST)
+        if form.is_valid():
+            project_name = form.cleaned_data['name']
+            project_signature = form.cleaned_data['signature']
+
+            project = Project.objects.get(name=project_name.title())
+
+            if not project:
+                new_project, created = Project.objects.get_or_create(
+                    name=project_name.title(),
+                    signature=project_signature
+                )
+                new_project.save()
+                return HttpResponseRedirect(reverse('admin-panel'))
+            else:
+                messages.error(request, 'Project already exists!')
+                return render(request, 'add-project.html', {'form': form})
+            
+class EditSignatureView(LoginRequiredMixin, View):
+    def get(self, request, name):
+        selected_project = get_object_or_404(Project, name=name)
+        signature = self.remove_tags(selected_project.signature)
+        form = EditSignatureForm(initial={
+            'signature': signature
+            }
+        )
+        return render(request, 'edit-signature.html', {'form': form, 'selected_project': selected_project})
+    
+    def post(self, request, name):
+        form = EditSignatureForm(request.POST)
+        if form.is_valid():
+            selected_project = get_object_or_404(Project, name=name)
+            project_signature = form.cleaned_data['signature']
+
+            selected_project.signature = project_signature
+            selected_project.save()
+            return HttpResponseRedirect(reverse('admin-panel'))
+
+            
+    def remove_tags(self, signature):
+        remove_breaks = re.sub(r'<br>', '', signature)
+        signature = remove_breaks
+        return signature

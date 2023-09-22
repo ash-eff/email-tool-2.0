@@ -4,11 +4,27 @@ from django.utils.text import slugify
 class Project(models.Model):
     name = models.CharField(max_length=40, default='Project Name')
     email_templates = models.ManyToManyField("CustomFormTemplate", related_name='projects_using_templates', blank=True)
-    signature = models.ForeignKey('CustomFormSignature', related_name='projects_using_templates', on_delete=models.CASCADE, blank = True, null=True)
+    signature = models.TextField(max_length=400, default='Signature Goes Here', null=True)
     global_project = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        self.signature = self.format_signature_for_html(self.signature)
+        super().save(*args, **kwargs)
+
+    def format_signature_for_html(self, signature):
+        lines = signature.split('\n')
+
+        formatted_lines = []
+
+        for line in lines:
+            line = line.strip()
+            formatted_lines.append(f'{line}<br>')
+
+        html_formatted_signature = '\n'.join(formatted_lines)
+        return html_formatted_signature
     
 class CustomFormField(models.Model):
     LABEL_CHOICES = [

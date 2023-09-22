@@ -36,3 +36,10 @@ class TemplateEditForm(forms.Form):
                 required=False,
                 initial=[],
     )
+
+class AddProjectForm(forms.Form):
+    name = forms.CharField(max_length=40)
+    signature = forms.CharField(widget=forms.Textarea)
+
+class EditSignatureForm(forms.Form):
+    signature = forms.CharField(widget=forms.Textarea)

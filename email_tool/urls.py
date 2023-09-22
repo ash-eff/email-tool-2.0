@@ -1,5 +1,7 @@
 from django.urls import path, include
-from .views import ProjectSelectionView, ProjectLandingPageView, CreateEmailView, TemplateBuildView, AdminPanelView, ViewEditTemplateView, EditTemplateView
+from .views import (ProjectSelectionView, ProjectLandingPageView, CreateEmailView, 
+                    TemplateBuildView, AdminPanelView, ViewEditTemplateView, EditTemplateView,
+                    ProjectAddView, EditSignatureView)
 
 urlpatterns = [
     path('', ProjectSelectionView.as_view(), name='home'),
@@ -10,4 +12,6 @@ urlpatterns = [
     path('admin-panel', AdminPanelView.as_view(), name='admin-panel'),
     path('view-edit-templates/<str:name>/', ViewEditTemplateView.as_view(), name='view-edit-templates'),
     path('edit-template/<str:name>/<slug:template_slug>/', EditTemplateView.as_view(), name='edit-template'),
+    path('add-project', ProjectAddView.as_view(), name='add-project'),
+    path('edit-signature/<str:name>/', EditSignatureView.as_view(), name='edit-signature'),
 ]
