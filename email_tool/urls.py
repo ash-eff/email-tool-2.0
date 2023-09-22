@@ -1,7 +1,8 @@
 from django.urls import path, include
 from .views import (ProjectSelectionView, ProjectLandingPageView, CreateEmailView, 
                     TemplateBuildView, AdminPanelView, ViewEditTemplateView, EditTemplateView,
-                    ProjectAddView, EditSignatureView)
+                    ProjectAddView, EditSignatureView, FormCreatorView, FormDeleteView, template_delete_confirmation_view,
+                    form_delete_confirmation_view,)
 
 urlpatterns = [
     path('', ProjectSelectionView.as_view(), name='home'),
@@ -14,4 +15,9 @@ urlpatterns = [
     path('edit-template/<str:name>/<slug:template_slug>/', EditTemplateView.as_view(), name='edit-template'),
     path('add-project', ProjectAddView.as_view(), name='add-project'),
     path('edit-signature/<str:name>/', EditSignatureView.as_view(), name='edit-signature'),
+    path('form-creator/<str:name>/', FormCreatorView.as_view(), name='form-creator'),
+    path('form-delete/<str:name>/', FormDeleteView.as_view(), name='form-delete'),
+    path('template_delete_confirmation_view', template_delete_confirmation_view, name='template_delete_confirmation_view'),
+    path('form_delete_confirmation_view', form_delete_confirmation_view, name='form_delete_confirmation_view')
+
 ]

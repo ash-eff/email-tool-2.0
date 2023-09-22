@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic.edit import UpdateView
+from django.views.generic.edit import DeleteView
 from django.views import View
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from .forms import (ProjectSelectionForm, TemplateBuilderForm, 
-                    TemplateEditForm, AddProjectForm, EditSignatureForm)
+                    TemplateEditForm, AddProjectForm, EditSignatureForm,
+                    FormCreatorForm, FormDeleteForm)
 from .models import Project, CustomFormTemplate, CustomFormField, CustomFormSignature
 from django import forms
 from django.core.exceptions import ValidationError
@@ -78,14 +79,13 @@ class EditTemplateView(LoginRequiredMixin, View):
         selected_project_name = name
         selected_project = get_object_or_404(Project, name=name)
         selected_template = get_object_or_404(CustomFormTemplate, template_slug=template_slug)
-        global_project = get_object_or_404(Project, global_project=True)
-        initial_fields = CustomFormField.objects.filter(Q(project=selected_project) | Q(project=global_project))
+        initial_fields = CustomFormField.objects.filter(project=selected_project)
         selected_agent_fields = {field.template_format: field.template_code.title() for field in initial_fields}
         template_with_reverse_formatted_fields = self.reverse_text_replace(selected_agent_fields, selected_template.template_text)
         html_formatted_email_safe  = mark_safe(selected_template.template_text)
         template_with_no_html_tags = self.remove_tags(template_with_reverse_formatted_fields)
         
-        form = TemplateEditForm(initial={
+        form = TemplateEditForm(project=selected_project, initial={ 
             'template_name': selected_template.template_name,
             'template': template_with_no_html_tags,
             'formatted_template': html_formatted_email_safe,
@@ -97,14 +97,15 @@ class EditTemplateView(LoginRequiredMixin, View):
             'selected_template': selected_template,
             'selected_project_name': selected_project_name, 
             'selected_project': selected_project, 
-            'global_project': global_project,
             'preview_template': html_formatted_email_safe,
             'template_slug': template_slug,
             }
         )
     
     def post(self, request, name, template_slug):
-        form = TemplateBuilderForm(request.POST,)
+        selected_project_name = name
+        selected_project = get_object_or_404(Project, name=selected_project_name)
+        form = TemplateBuilderForm(request.POST, project=selected_project)
         if 'format' in request.POST:
             if form.is_valid():
                 selected_project_name = name
@@ -116,7 +117,7 @@ class EditTemplateView(LoginRequiredMixin, View):
                 html_formatted_email = self.format_template_for_html(template_with_formatted_fields) 
                 html_formatted_email_safe  = mark_safe(html_formatted_email)
                 
-                form = TemplateEditForm(initial={
+                form = TemplateEditForm(project=selected_project, initial={
                     'template_name': template_name,
                     'template': selected_template,
                     'formatted_template': html_formatted_email,
@@ -158,13 +159,11 @@ class EditTemplateView(LoginRequiredMixin, View):
 
                 return HttpResponseRedirect(reverse('view-edit-templates', args=[selected_project.name]))
             
-        elif 'delete' in request.POST:
-            selected_project = get_object_or_404(Project, name=name)
+        else:
             selected_template = get_object_or_404(CustomFormTemplate, project=selected_project, template_slug=template_slug)
-
             selected_template.delete()
 
-            return HttpResponseRedirect(reverse('view-edit-templates', args=[selected_project.name]))
+            return HttpResponseRedirect(reverse('template_delete_confirmation_view'))
             
     def reverse_text_replace(self, selected_agent_fields, selected_template):
         replacements = selected_agent_fields
@@ -274,49 +273,48 @@ class CreateEmailView(View):
     def get_field_order(self, template):
         form_fields = {}
         field_order_config = template.field_order_config
-        sorted_fields = sorted(template.fields.all(), key=lambda field: field_order_config.get(f"{field.label} {field.label_two}" if field.label_two else field.label, 0))
+        sorted_fields = sorted(template.fields.all(), key=lambda field: field_order_config.get(field.label, 0))
         for field in sorted_fields:
-            con_field_name = field.label + ' ' + field.label_two if field.label_two is not None else field.label
             field_type = field.field_type
             field_choices = field.choices.split(',') if field.choices else []
             field_required = field.required
 
             if field_type == 'CharField':
-                form_fields[con_field_name] = forms.CharField(
+                form_fields[field.label] = forms.CharField(
                     required=field_required,
-                    label = con_field_name,
+                    label = field.label,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'EmailField':
-                form_fields[con_field_name] = forms.EmailField(
+                form_fields[field.label] = forms.EmailField(
                     required=field_required,
-                    label = con_field_name,
+                    label = field.label,
                     widget=forms.EmailInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'ChoiceField':
-                form_fields[con_field_name] = forms.ChoiceField(
+                form_fields[field.label] = forms.ChoiceField(
                     choices=[(choice.strip(), choice.strip()) for choice in field_choices],
                     required=field_required,
-                    label = con_field_name,
+                    label = field.label,
                     widget=forms.Select(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'IntegerField':
-                form_fields[con_field_name] = forms.IntegerField(
+                form_fields[field.label] = forms.IntegerField(
                     required=field_required,
-                    label = con_field_name,
+                    label = field.label,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                 )
             elif field_type == 'EKField':
-                form_fields[con_field_name] = forms.IntegerField(
+                form_fields[field.label] = forms.IntegerField(
                     required=field_required,
-                    label = con_field_name,
+                    label = field.label,
                     widget=forms.TextInput(attrs={'class': 'form-control'}),
                     validators=[self.validate_ekfield]
                 )
             elif field_type == 'TextField':
-                form_fields[con_field_name] = forms.CharField(
+                form_fields[field.label] = forms.CharField(
                     required=field_required,
-                    label = con_field_name,
+                    label = field.label,
                     widget=forms.Textarea(attrs={'class': 'form-control'}),
                 )
         return form_fields
@@ -334,17 +332,16 @@ class TemplateBuildView(LoginRequiredMixin, View):
     def get(self, request, name):
         selected_project_name = name.title()
         selected_project = get_object_or_404(Project, name=name)
-        global_project = get_object_or_404(Project, global_project=True)
-        initial_fields = CustomFormField.objects.filter(Q(project=selected_project) | Q(project=global_project))
+        initial_fields = CustomFormField.objects.filter(project=selected_project)
 
-        form = TemplateBuilderForm
-        return render(request, "template-builder.html", {'form': form, 'selected_project_name': selected_project_name, 'selected_project': selected_project, 'global_project': global_project})
+        form = TemplateBuilderForm(project = selected_project)
+        return render(request, "template-builder.html", {'form': form, 'selected_project_name': selected_project_name, 'selected_project': selected_project,})
     
     def post(self, request, name):
-        form = TemplateBuilderForm(request.POST,)
+        selected_project = get_object_or_404(Project, name=name)
+        form = TemplateBuilderForm(request.POST, project = selected_project)
         if 'format' in request.POST:
             if form.is_valid():
-                selected_project = get_object_or_404(Project, name=name)
                 template_name = form.cleaned_data['template_name']
                 saved_template_text = form.cleaned_data['template']
                 selected_agent_fields = form.cleaned_data['agent_fields']
@@ -353,7 +350,7 @@ class TemplateBuildView(LoginRequiredMixin, View):
                 html_formatted_email_safe  = mark_safe(html_formatted_email)
                 form.cleaned_data['formatted_template'] = html_formatted_email
                 
-                form = TemplateBuilderForm(
+                form = TemplateBuilderForm(project = selected_project,
                     initial={
                         'formatted_template': html_formatted_email,
                         'template': saved_template_text,
@@ -365,7 +362,8 @@ class TemplateBuildView(LoginRequiredMixin, View):
                 
                 return render(request, "template-builder.html", {'form': form, 'selected_project': selected_project, 'preview_text': html_formatted_email_safe})
             else:
-                return render(request, "template-builder.html", {'form': form})
+                print('invalid')
+                return render(request, "template-builder.html", {'form': form, 'selected_project':selected_project})
             
         elif 'save' in request.POST:
             if form.is_valid():
@@ -436,18 +434,17 @@ class ProjectAddView(LoginRequiredMixin, View):
             project_name = form.cleaned_data['name']
             project_signature = form.cleaned_data['signature']
 
-            project = Project.objects.get(name=project_name.title())
-
-            if not project:
+            try:
+                project = Project.objects.get(name=project_name.title())
+                messages.error(request, 'Project already exists!')
+                return render(request, 'add-project.html', {'form': form})   
+            except Project.DoesNotExist:       
                 new_project, created = Project.objects.get_or_create(
                     name=project_name.title(),
                     signature=project_signature
                 )
                 new_project.save()
-                return HttpResponseRedirect(reverse('admin-panel'))
-            else:
-                messages.error(request, 'Project already exists!')
-                return render(request, 'add-project.html', {'form': form})
+                return HttpResponseRedirect(reverse('admin-panel'))    
             
 class EditSignatureView(LoginRequiredMixin, View):
     def get(self, request, name):
@@ -474,3 +471,60 @@ class EditSignatureView(LoginRequiredMixin, View):
         remove_breaks = re.sub(r'<br>', '', signature)
         signature = remove_breaks
         return signature
+    
+class FormCreatorView(LoginRequiredMixin, View):
+    def get(self, request, name):
+        selected_project_name = name.title()
+        selected_project = get_object_or_404(Project, name=selected_project_name)
+        form = FormCreatorForm()
+        return render(request, 'form-creator.html', {'form': form, 'selected_project': selected_project})
+    
+    def post(self, request, name):
+        form = FormCreatorForm(request.POST)
+        if form.is_valid():
+            selected_project_name = name.title()
+            selected_project = get_object_or_404(Project, name=selected_project_name)
+            label = form.cleaned_data['label']
+            field_type = form.cleaned_data['field_type']
+            required = form.cleaned_data['required']
+            choices = form.cleaned_data['choices']
+            try:
+                form_field = CustomFormField.objects.get(label=label.title(), project=selected_project)
+                messages.error(request, 'Form with that name already exists!')
+                return render(request, 'form-creator.html', {'form': form, 'selected_project': selected_project})   
+            except CustomFormField.DoesNotExist:       
+                new_form_field, created = CustomFormField.objects.get_or_create(
+                    project=selected_project,
+                    label = label,
+                    field_type = field_type,
+                    required = required,
+                    choices = choices
+                )
+                new_form_field.save()
+                return HttpResponseRedirect(reverse('admin-panel'))    
+            
+class FormDeleteView(LoginRequiredMixin, View):
+    def get(self, request, name):
+        selected_project_name = name.title()
+        selected_project = get_object_or_404(Project, name=selected_project_name)
+        form = FormDeleteForm(project=selected_project)
+        return render(request, 'form-delete.html', {'form': form, 'selected_project': selected_project})
+    
+    def post(self, request, name):
+        selected_project_name = name.title()
+        selected_project = get_object_or_404(Project, name=selected_project_name)
+        form = FormDeleteForm(request.POST, project=selected_project)
+
+        if form.is_valid():
+            selected_forms_fields = form.cleaned_data['form_fields']
+
+            for field in selected_forms_fields:
+                CustomFormField.objects.filter(project=selected_project, label=field.label).delete()
+
+            return HttpResponseRedirect(reverse('form_delete_confirmation_view'))
+        
+def template_delete_confirmation_view(request):
+    return render(request, 'template-delete-confirmation.html')
+
+def form_delete_confirmation_view(request):
+    return render(request, 'form-delete-confirmation.html')

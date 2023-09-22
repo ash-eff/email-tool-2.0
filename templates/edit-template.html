@@ -10,6 +10,8 @@
 <div class="container-fluid" style="border-radius: 5px;">
     <form method="post" action="{% url 'edit-template' name=selected_project.name template_slug=template_slug %}" >
         {% csrf_token %}
+        <input type="hidden" name="name" value="{{ selected_project.name }}">
+        <input type="hidden" name="template_slug" value="{{ template_slug }}">
         <div class="row" style="margin-top: 20px;">
         <div class="col-md-2">
             <div class="custom-background template-column">
@@ -37,8 +39,8 @@
                 <label for="preview_area" class="form-label nice-font">Template Preview</label>
                 <div id="preview_area" class="scrollable-div form-nice-font" >{{ preview_template|safe }}</div>
                 <div class="d-flex justify-content-end">
-                    <button class="btn btn-outline-warning generate-button " type="submit" name="save">Save Template</button>
-                    <button class="btn btn-outline-warning generate-button" type="submit" name="delete">Delete Template</button>
+                    <button class="btn btn-outline-warning generate-button" type="submit" name="save">Save Template</button>
+                    <button class="btn btn-outline-warning generate-button" type="button" id="delete-template-button" name="delete">Delete Template</button>
                 </div>
             </div>
         </div>
@@ -70,3 +72,22 @@
 
 
 {% endblock content %}
+
+{% block script %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var deleteFormsButton  = document.getElementById("delete-template-button");
+    
+        deleteFormsButton.addEventListener("click", function (e) {
+            e.preventDefault();
+            var confirmation = confirm("Are you sure you want to delete this template?");
+            if (confirmation) {
+                // If the user confirms, submit the form
+                var form = document.querySelector("form");
+                form.submit();
+            }
+        });
+    });
+</script>
+     
+{% endblock script %}

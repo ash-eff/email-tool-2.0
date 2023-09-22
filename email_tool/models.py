@@ -6,13 +6,41 @@ class Project(models.Model):
     email_templates = models.ManyToManyField("CustomFormTemplate", related_name='projects_using_templates', blank=True)
     signature = models.TextField(max_length=400, default='Signature Goes Here', null=True)
     global_project = models.BooleanField(default=False)
+    form_fields_created = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
     
     def save(self, *args, **kwargs):
         self.signature = self.format_signature_for_html(self.signature)
-        super().save(*args, **kwargs)
+        super(Project, self).save(*args, **kwargs)
+
+        if not self.form_fields_created:
+            form_fields_data = [
+                {'label': 'Greeting', 'field_type': 'ChoiceField', 'required': True, 
+                 'choices': 'Hello, Greetings, Good Morning, Good Afternoon, Good Evening'},
+                {'label': 'Closing', 'field_type': 'ChoiceField', 'required': True, 
+                 'choices': 'Thank You, Regards, Best Regards, Respectfully'},
+                {'label': 'User Name', 'field_type': 'CharField', 'required': True},
+                {'label': 'User Email', 'field_type': 'EmailField', 'required': True},
+                {'label': 'User Phone', 'field_type': 'CharField', 'required': True},
+                {'label': 'Agent Name', 'field_type': 'CharField', 'required': True},
+                {'label': 'Coordinator Name', 'field_type': 'CharField', 'required': True},
+                {'label': 'Coordinator Email', 'field_type': 'EmailField', 'required': True},
+                {'label': 'Coordinator Phone', 'field_type': 'CharField', 'required': True},
+                {'label': 'Correct EK', 'field_type': 'EKField', 'required': True},
+                {'label': 'Incorrect EK', 'field_type': 'EKField', 'required': True},
+                {'label': 'School Year', 'field_type': 'ChoiceField', 'required': True,
+                 'choices': 'SY 21-22, SY 22-23, SY 23-24'},
+                {'label': 'Results ID', 'field_type': 'IntegerField', 'required': True,},
+                {'label': 'Case Number', 'field_type': 'IntegerField', 'required': True,},
+            ]
+
+            for field_data in form_fields_data:
+                CustomFormField.objects.create(project=self, **field_data)
+
+            self.form_fields_created = True
+            self.save(update_fields=['form_fields_created'])
 
     def format_signature_for_html(self, signature):
         lines = signature.split('\n')
@@ -27,27 +55,6 @@ class Project(models.Model):
         return html_formatted_signature
     
 class CustomFormField(models.Model):
-    LABEL_CHOICES = [
-        ('Greeting', 'Greeting'),
-        ('Closing', 'Closing'),
-        ('User Name', 'User Name'),
-        ('User Email', 'User Email'),
-        ('Case Number', 'Case Number'), 
-        ('Agent Name', 'Agent Name'),
-        ('Coordinator Choices', 'Coordinator Choices'),
-        ('Coordinator Choices Abbreviated', 'Coordinator Choices Abbreviated'),
-        ('Coordinator Name', 'Coordinator Name'),
-        ('Coordinator Email', 'Coordinator Email'),
-        ('Coordinator Phone', 'Coordinator Phone'),
-        ('Incorrect EK', 'Incorrect EK'),
-        ('Correct EK', 'Correct EK'),
-        ('School Year', 'School Year'),
-        ('Results ID', 'Results ID'),
-        ('General Choice Field', 'General Choice Field'),
-        ('General Integer Field', 'General Integer Field'),
-        ('General Text Field', 'General Text Field'),
-    ]
-
     FIELD_TYPES = [
         ('ChoiceField', 'ChoiceField'),
         ('IntegerField', 'IntegerField'),
@@ -58,16 +65,12 @@ class CustomFormField(models.Model):
     ]
 
     project = models.ForeignKey("Project", related_name='projects_using_fields', on_delete=models.CASCADE, blank=True, null=True)    
-    label = models.CharField(max_length=60, choices=LABEL_CHOICES)
-    label_two = models.CharField(max_length=30, blank=True, null=True)
+    label = models.CharField(max_length=60)
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
     required = models.BooleanField(default=True)
     choices = models.CharField(max_length=200, blank=True, null=True)
     template_code = models.CharField(max_length=61, default='', blank=True)
     template_format = models.CharField(max_length=62, default='', blank=True)
-
-    def is_global_field(self):
-        return self.projects is None or self.projects.filter(global_project=True).exists()
     
     def save(self, *args, **kwargs):
         self.template_code = '!' + self.label.lower()
@@ -75,12 +78,7 @@ class CustomFormField(models.Model):
         super(CustomFormField, self).save(*args, **kwargs)
 
     def __str__(self):
-        label_two_display = ''
-        if self.label_two != None:
-            label_two_display = self.label_two
-
-        return self.get_label_display()
-        #return f"{self.title} - {self.get_label_display()} {label_two_display}"
+        return f"{self.project.name} - {self.label}"
 
 class CustomFormSignature(models.Model):
     project = models.ForeignKey(Project, related_name='signatures', on_delete=models.CASCADE, blank = True, null=True)

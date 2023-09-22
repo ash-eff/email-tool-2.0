@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block header %}
+    {{selected_project.name }}
+{% endblock header %}
+
+{% block content %}
+<div class="container-fluid" style="border-radius: 5px;">
+    <form method="post" action="{% url 'form-creator' name=selected_project.name %}" >
+        {% csrf_token %}
+        <div class="row" style="margin-top: 20px;">
+        <div class="col-md-3"></div>
+
+        <div class="col-md-6">
+            <div class="custom-background template-column nice-font" >
+                <p>Project Name: {{selected_project.name}}</p>
+                <span class="form-nice-font">What will your form be called? (Case Number, User Name, etc...)</span>
+                {{ form.label|as_crispy_field }}
+                <span class="form-nice-font">Select the type of field this will represent. See Choice Field Breakdown for help.</span>
+                {{ form.field_type|as_crispy_field }}
+                <span class="form-nice-font">Use this field along with the ChoiceField Type. Seperate choices with commas.</span>
+                {{ form.choices|as_crispy_field }}
+                <span class="form-nice-font">Should the use of this form be required in the template?</span>
+                {{ form.required|as_crispy_field }}
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-outline-warning generate-button" type="submit" name="format">Save Form</button>
+                </div>
+            </div>
+
+        </div>
+    
+        <div class="col-md-3">
+            <div class="custom-background template-column nice-font" >
+                <p>Choice Field Breakdown</p>
+                <ul class="form-nice-font">
+                    <li>
+                        Use a ChoiceField for adding choices to the Form. This is useful for adding multiple options for greetings, or coordinators. 
+                    </li>
+                    <li>
+                        Use an IntegerField for numbers. This is useful for case numbers. Never use this for Student IDs. 
+                    </li>
+                    <li>
+                        Use a CharField for short text fields. This is useful for names, phone numbers aned other short strings.
+                    </li>
+                    <li>
+                        Use an EmailField for Email addresses. 
+                    </li>
+                    <li>
+                        Use a TextField For multiline text.
+                    </li>
+                    <li>
+                        Use an EKField for Entity Keys.
+                    </li>
+
+                </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    </form> 
+    <div class="row" style="margin-top: 20px;">
+        <div class="col-md-3"></div>
+
+        <div class="col-md-6">
+            <div  class="d-flex justify-content-start nice-font">
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}  
+            </div>
+        </div>
+    
+        <div class="col-md-3"></div>
+    </div>
+   
+</div>
+
+
+
+{% endblock content %}
