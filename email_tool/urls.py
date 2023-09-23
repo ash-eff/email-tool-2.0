@@ -2,7 +2,7 @@ from django.urls import path, include
 from .views import (ProjectSelectionView, ProjectLandingPageView, CreateEmailView, 
                     TemplateBuildView, AdminPanelView, ViewEditTemplateView, EditTemplateView,
                     ProjectAddView, EditSignatureView, FormCreatorView, FormDeleteView, template_delete_confirmation_view,
-                    form_delete_confirmation_view,)
+                    form_delete_confirmation_view, about_view)
 
 urlpatterns = [
     path('', ProjectSelectionView.as_view(), name='home'),
@@ -18,6 +18,7 @@ urlpatterns = [
     path('form-creator/<str:name>/', FormCreatorView.as_view(), name='form-creator'),
     path('form-delete/<str:name>/', FormDeleteView.as_view(), name='form-delete'),
     path('template_delete_confirmation_view', template_delete_confirmation_view, name='template_delete_confirmation_view'),
-    path('form_delete_confirmation_view', form_delete_confirmation_view, name='form_delete_confirmation_view')
+    path('form_delete_confirmation_view', form_delete_confirmation_view, name='form_delete_confirmation_view'),
+    path('about', about_view, name='about'),
 
 ]

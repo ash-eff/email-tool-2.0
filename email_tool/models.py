@@ -34,6 +34,7 @@ class Project(models.Model):
                  'choices': 'SY 21-22, SY 22-23, SY 23-24'},
                 {'label': 'Results ID', 'field_type': 'IntegerField', 'required': True,},
                 {'label': 'Case Number', 'field_type': 'IntegerField', 'required': True,},
+                {'label': 'User Information Field', 'field_type': 'UserInfoField', 'required': True,},
             ]
 
             for field_data in form_fields_data:
@@ -62,6 +63,7 @@ class CustomFormField(models.Model):
         ('EmailField', 'EmailField'),
         ('TextField', 'TextField'),
         ('EKField', 'EKField'),
+        ('UserInfoField', 'UserInfoField')
     ]
 
     project = models.ForeignKey("Project", related_name='projects_using_fields', on_delete=models.CASCADE, blank=True, null=True)    

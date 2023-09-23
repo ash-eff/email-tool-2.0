@@ -255,7 +255,11 @@ class CreateEmailView(View):
             template_text = template.template_text
             template_text = self.remove_span_tags(template_text)
             form_data = form.cleaned_data.copy()
-            form_data['Results ID'] = self.format_results_ids
+            if 'User Information Field' in form_data:
+                form_data['User Information Field'] = self.format_customer_information(form_data)
+            if 'Results ID' in form_data:
+                form_data['Results ID'] = self.format_results_ids(form_data)
+
             form_data['Signature'] = selected_project.signature
 
             formatted_text = template_text.format(**form_data)
@@ -317,15 +321,49 @@ class CreateEmailView(View):
                     label = field.label,
                     widget=forms.Textarea(attrs={'class': 'form-control'}),
                 )
+            elif field_type == 'UserInfoField':
+                form_fields[field.label] = forms.CharField(
+                    required=field_required,
+                    label = field.label,
+                    widget=forms.Textarea(attrs={'class': 'form-control'}),
+                )
         return form_fields
 
     def validate_ekfield(self, value):
         if value is not None and (value < 0 or value > 99999999):
             raise ValidationError('Must be a valid EK Number. Make sure you are not providing a Student Id!')
+    
+    def format_customer_information(self, form_data):
+        remove_all_before_name = re.sub(r'.*Close', 'Name:', form_data['User Information Field'], flags=re.DOTALL)
+        remove_create_date_and_beyond = re.sub(r'Create Date:.+', 'Case Creation Date:', remove_all_before_name, flags=re.DOTALL)
+        remove_customer_id = re.sub(r'\[(.*?)Voice:', 'Voice:', remove_create_date_and_beyond, flags=re.DOTALL)
+        remove_alternative = re.sub(r'Alternative:(.*?)Project State:', 'Project State:', remove_customer_id, flags=re.DOTALL)
+        remove_region_code = re.sub(r'Region Code:(.*?)Region:', 'Region:', remove_alternative, flags=re.DOTALL)
+        remove_fax = re.sub(r'\bFax:\s*', '', remove_region_code)
+        clean_results = remove_fax
+
+        customer_info_lines = clean_results.split('\n')
+        filtered_lines = [line for line in customer_info_lines if line.strip()]
+        words_to_check = ["Name", "Voice", "Email", "Company", "Project State", "Region", "District Code", "District", "School Code", "Case Creation Date:"]
+        formatted_customer_info = []
+        skip_next = False
+        for i in range(len(filtered_lines)):
+            if skip_next:
+                skip_next = False
+                continue
+
+            line = filtered_lines[i].strip()
+            if i + 1 < len(filtered_lines) and not any(filtered_lines[i + 1].strip().startswith(word + ':') for word in words_to_check):
+                formatted_customer_info.append(f'{line} {filtered_lines[i + 1].strip()} {"<br>"}')
+                skip_next = True
+            else:
+                formatted_customer_info.append(line)
+
+        block_of_customer_info = '\n'.join(formatted_customer_info)
+        return block_of_customer_info
         
-    def format_results_ids(self):
-        result_id = self.form.data.get('Results ID', '')
-        formatted_results = 'RID: ' + ', RID: '.join([value.strip() for value in re.split(r'[ ,]+', result_id)])
+    def format_results_ids(self, form_data):
+        formatted_results = 'RID: ' + ', RID: '.join([value.strip() for value in re.split(r'[ ,]+', form_data['Results ID'])])
         return formatted_results
 
 class TemplateBuildView(LoginRequiredMixin, View):
@@ -528,3 +566,6 @@ def template_delete_confirmation_view(request):
 
 def form_delete_confirmation_view(request):
     return render(request, 'form-delete-confirmation.html')
+
+def about_view(request):
+    return render(request, 'about.html')
