@@ -64,7 +64,7 @@ class FormCreatorForm(forms.Form):
         ('EKField', 'EKField'),
     ]
 
-    label = forms.CharField(max_length=60, label='')
+    label = forms.CharField(max_length=15, label='')
     field_type = forms.ChoiceField(choices=FIELD_TYPES, widget=forms.Select, label='')
     required = forms.BooleanField(initial=True, required=False, label='Required')
     choices = forms.CharField(max_length=200, required=False, widget=forms.Textarea, label='')

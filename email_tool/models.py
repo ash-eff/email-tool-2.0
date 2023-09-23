@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+import re
 
 class Project(models.Model):
     name = models.CharField(max_length=40, default='Project Name')
@@ -44,7 +45,8 @@ class Project(models.Model):
             self.save(update_fields=['form_fields_created'])
 
     def format_signature_for_html(self, signature):
-        lines = signature.split('\n')
+        cleaned_signature = re.sub(r'\<br\>', '', signature)
+        lines = cleaned_signature.split('\n')
 
         formatted_lines = []
 
@@ -67,7 +69,7 @@ class CustomFormField(models.Model):
     ]
 
     project = models.ForeignKey("Project", related_name='projects_using_fields', on_delete=models.CASCADE, blank=True, null=True)    
-    label = models.CharField(max_length=60)
+    label = models.CharField(max_length=15)
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
     required = models.BooleanField(default=True)
     choices = models.CharField(max_length=200, blank=True, null=True)
