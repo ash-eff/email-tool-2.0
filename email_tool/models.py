@@ -69,7 +69,7 @@ class CustomFormField(models.Model):
     ]
 
     project = models.ForeignKey("Project", related_name='projects_using_fields', on_delete=models.CASCADE, blank=True, null=True)    
-    label = models.CharField(max_length=15)
+    label = models.CharField(max_length=40)
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
     required = models.BooleanField(default=True)
     choices = models.CharField(max_length=200, blank=True, null=True)

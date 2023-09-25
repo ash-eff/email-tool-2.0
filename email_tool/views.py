@@ -357,7 +357,7 @@ class CreateEmailView(View):
                 formatted_customer_info.append(f'{line} {filtered_lines[i + 1].strip()} {"<br>"}')
                 skip_next = True
             else:
-                formatted_customer_info.append(line)
+                formatted_customer_info.append(f'{line}{"<br>"}')
 
         block_of_customer_info = '\n'.join(formatted_customer_info)
         return block_of_customer_info
@@ -522,12 +522,12 @@ class FormCreatorView(LoginRequiredMixin, View):
         if form.is_valid():
             selected_project_name = name.title()
             selected_project = get_object_or_404(Project, name=selected_project_name)
-            label = form.cleaned_data['label']
+            label = form.cleaned_data['label'].title()
             field_type = form.cleaned_data['field_type']
             required = form.cleaned_data['required']
             choices = form.cleaned_data['choices']
             try:
-                form_field = CustomFormField.objects.get(label=label.title(), project=selected_project)
+                form_field = CustomFormField.objects.get(label=label, project=selected_project)
                 messages.error(request, 'Form with that name already exists!')
                 return render(request, 'form-creator.html', {'form': form, 'selected_project': selected_project})   
             except CustomFormField.DoesNotExist:       
