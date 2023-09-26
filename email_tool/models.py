@@ -33,7 +33,7 @@ class Project(models.Model):
                 {'label': 'Incorrect EK', 'field_type': 'EKField', 'required': True},
                 {'label': 'School Year', 'field_type': 'ChoiceField', 'required': True,
                  'choices': 'SY 21-22, SY 22-23, SY 23-24'},
-                {'label': 'Results ID', 'field_type': 'IntegerField', 'required': True,},
+                {'label': 'Results ID', 'field_type': 'TextField', 'required': True,},
                 {'label': 'Case Number', 'field_type': 'IntegerField', 'required': True,},
                 {'label': 'User Information Field', 'field_type': 'UserInfoField', 'required': True,},
             ]

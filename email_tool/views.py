@@ -71,7 +71,8 @@ class ViewEditTemplateView(LoginRequiredMixin, View):
     def post(self, request, name):
         selected_project_name = name
         template_name = request.POST.get('template_name', None)
-        template_slug = template_name.replace(' ', '-').lower()
+        current_template = get_object_or_404(CustomFormTemplate, template_name=template_name)
+        template_slug = current_template.template_slug
         return HttpResponseRedirect(reverse('edit-template', args=[name, template_slug]))
     
 class EditTemplateView(LoginRequiredMixin, View):
@@ -373,7 +374,11 @@ class TemplateBuildView(LoginRequiredMixin, View):
         initial_fields = CustomFormField.objects.filter(project=selected_project)
 
         form = TemplateBuilderForm(project = selected_project)
-        return render(request, "template-builder.html", {'form': form, 'selected_project_name': selected_project_name, 'selected_project': selected_project,})
+        return render(request, "template-builder.html", {
+            'form': form, 
+            'selected_project_name': selected_project_name, 
+            'selected_project': selected_project, 
+            })
     
     def post(self, request, name):
         selected_project = get_object_or_404(Project, name=name)
@@ -398,7 +403,11 @@ class TemplateBuildView(LoginRequiredMixin, View):
                     }
                 ) 
                 
-                return render(request, "template-builder.html", {'form': form, 'selected_project': selected_project, 'preview_text': html_formatted_email_safe})
+                return render(request, "template-builder.html", {
+                    'form': form, 
+                    'selected_project': selected_project, 
+                    'preview_text': html_formatted_email_safe,
+                    })
             else:
                 print('invalid')
                 return render(request, "template-builder.html", {'form': form, 'selected_project':selected_project})
