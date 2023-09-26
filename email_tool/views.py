@@ -158,13 +158,13 @@ class EditTemplateView(LoginRequiredMixin, View):
                 custom_template.save()
                 selected_project.email_templates.add(custom_template)
 
-                return HttpResponseRedirect(reverse('view-edit-templates', args=[selected_project.name]))
+                return HttpResponseRedirect(reverse('template-save-confirmation'))
             
         else:
             selected_template = get_object_or_404(CustomFormTemplate, project=selected_project, template_slug=template_slug)
             selected_template.delete()
 
-            return HttpResponseRedirect(reverse('template_delete_confirmation_view'))
+            return HttpResponseRedirect(reverse('template-delete-confirmation'))
             
     def reverse_text_replace(self, selected_agent_fields, selected_template):
         replacements = selected_agent_fields
@@ -430,7 +430,7 @@ class TemplateBuildView(LoginRequiredMixin, View):
                 custom_template.save()
                 selected_project.email_templates.add(custom_template)
 
-                return HttpResponseRedirect(reverse('view-edit-templates', args=[selected_project.name]))
+                return HttpResponseRedirect(reverse('template-add-confirmation'))
         
     def format_template_for_html(self, template_with_formatted_fields):
         lines = template_with_formatted_fields.split('\n')
@@ -491,7 +491,7 @@ class ProjectAddView(LoginRequiredMixin, View):
                     signature=project_signature
                 )
                 new_project.save()
-                return HttpResponseRedirect(reverse('admin-panel'))    
+                return HttpResponseRedirect(reverse('project-add-confirmation'))    
             
 class EditSignatureView(LoginRequiredMixin, View):
     def get(self, request, name):
@@ -511,7 +511,7 @@ class EditSignatureView(LoginRequiredMixin, View):
 
             selected_project.signature = project_signature
             selected_project.save()
-            return HttpResponseRedirect(reverse('admin-panel'))
+            return HttpResponseRedirect(reverse('signature-save-confirmation'))
 
             
     def remove_tags(self, signature):
@@ -548,7 +548,7 @@ class FormCreatorView(LoginRequiredMixin, View):
                     choices = choices
                 )
                 new_form_field.save()
-                return HttpResponseRedirect(reverse('admin-panel'))    
+                return HttpResponseRedirect(reverse('form-add-confirmation'))    
             
 class FormDeleteView(LoginRequiredMixin, View):
     def get(self, request, name):
@@ -568,13 +568,28 @@ class FormDeleteView(LoginRequiredMixin, View):
             for field in selected_forms_fields:
                 CustomFormField.objects.filter(project=selected_project, label=field.label).delete()
 
-            return HttpResponseRedirect(reverse('form_delete_confirmation_view'))
+            return HttpResponseRedirect(reverse('form-delete-confirmation'))
         
 def template_delete_confirmation_view(request):
     return render(request, 'template-delete-confirmation.html')
 
 def form_delete_confirmation_view(request):
     return render(request, 'form-delete-confirmation.html')
+
+def project_add_confirmation_view(request):
+    return render(request, 'project-add-confirmation.html')
+
+def template_add_confirmation_view(request):
+    return render(request, 'template-add-confirmation.html')
+
+def template_save_confirmation_view(request):
+    return render(request, 'template-save-confirmation.html')
+
+def signature_save_confirmation_view(request):
+    return render(request, 'signature-save-confirmation.html')
+
+def form_add_confirmation_view(request):
+    return render(request, 'form-add-confirmation.html')
 
 def about_view(request):
     return render(request, 'about.html')
