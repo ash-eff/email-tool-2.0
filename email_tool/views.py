@@ -335,7 +335,7 @@ class CreateEmailView(View):
             raise ValidationError('Must be a valid EK Number. Make sure you are not providing a Student Id!')
     
     def format_customer_information(self, form_data):
-        remove_all_before_name = re.sub(r'.*Close', 'Name:', form_data['User Information Field'], flags=re.DOTALL)
+        remove_all_before_name = re.sub(r'.*(Close|Cancel)', 'Name:', form_data['User Information Field'], flags=re.DOTALL)
         remove_create_date_and_beyond = re.sub(r'Create Date:.+', 'Case Creation Date:', remove_all_before_name, flags=re.DOTALL)
         remove_customer_id = re.sub(r'\[(.*?)Voice:', 'Voice:', remove_create_date_and_beyond, flags=re.DOTALL)
         remove_alternative = re.sub(r'Alternative:(.*?)Project State:', 'Project State:', remove_customer_id, flags=re.DOTALL)

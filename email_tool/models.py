@@ -36,6 +36,8 @@ class Project(models.Model):
                 {'label': 'Results ID', 'field_type': 'TextField', 'required': True,},
                 {'label': 'Case Number', 'field_type': 'IntegerField', 'required': True,},
                 {'label': 'User Information Field', 'field_type': 'UserInfoField', 'required': True,},
+                {'label': 'Internal Teams', 'field_type': 'ChoiceField', 'required': True, 
+                 'choices': 'Project Team, Tier 2'},
             ]
 
             for field_data in form_fields_data:
